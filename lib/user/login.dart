@@ -7,6 +7,7 @@ class Login extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextEditingController username = TextEditingController();
     final TextEditingController password = TextEditingController();
+    
     return Scaffold(
       backgroundColor: Color(0xFFD8C38A),
       body: Center(
@@ -35,7 +36,14 @@ class Login extends StatelessWidget {
               Align(alignment: Alignment.centerLeft, child: Text('Username')),
               TextField(
                 controller: username,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 10,
+                  ),
+                ),
               ),
               SizedBox(height: 10),
 
@@ -44,7 +52,14 @@ class Login extends StatelessWidget {
               TextField(
                 controller: password,
                 obscureText: true,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 10,
+                  ),
+                ),
               ),
               SizedBox(height: 20),
 
