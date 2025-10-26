@@ -20,7 +20,7 @@ class Login extends StatelessWidget {
               Image.asset('assets/images/bird.png', height: 80),
               SizedBox(height: 20),
 
-              // Title
+              // title
               Text(
                 'Room Reservation System',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -32,7 +32,7 @@ class Login extends StatelessWidget {
               ),
               SizedBox(height: 20),
 
-              // Username
+              // username
               Align(alignment: Alignment.centerLeft, child: Text('Username')),
               TextField(
                 controller: username,
@@ -47,7 +47,7 @@ class Login extends StatelessWidget {
               ),
               SizedBox(height: 10),
 
-              // Password
+              // password
               Align(alignment: Alignment.centerLeft, child: Text('Password')),
               TextField(
                 controller: password,
@@ -63,7 +63,7 @@ class Login extends StatelessWidget {
               ),
               SizedBox(height: 20),
 
-              // Login Button
+              // login button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -81,13 +81,13 @@ class Login extends StatelessWidget {
               ),
               SizedBox(height: 20),
 
-              // Create new
+              // create new
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text("Don't have an account? "),
-                  TextButton(
-                    style: TextButton.styleFrom(
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white70,
                       foregroundColor: Colors.blue,
                       side: BorderSide(color: Colors.blue),
