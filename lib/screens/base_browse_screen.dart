@@ -1,30 +1,52 @@
 import 'package:flutter/material.dart';
-import '../models/room_data.dart'; 
- 
+import '../models/room_data.dart';
+
 
 class BaseBrowseScreen extends StatelessWidget {
   final UserRole userRole;
   final String userName;
   final Widget? actionButtons; // ปุ่ม Add/Edit / Reserve / Approve-Reject
+final void Function(RoomSlot)? onSlotSelected;
 
   const BaseBrowseScreen({
     super.key,
     required this.userRole,
     required this.userName,
     this.actionButtons,
+    this.onSlotSelected, 
   });
 
   // ข้อมูลจำลอง (Mock Data)
   static final List<RoomSlot> _roomSlots = [
-    RoomSlot(no: 1, room: 'LR-101', timeSlots: '8:00-10:00', status: 'Reserved'),
-    RoomSlot(no: 2, room: 'LR-101', timeSlots: '10:00-12:00', status: 'Pending'),
+    RoomSlot(
+      no: 1,
+      room: 'LR-101',
+      timeSlots: '8:00-10:00',
+      status: 'Reserved',
+    ),
+    RoomSlot(
+      no: 2,
+      room: 'LR-101',
+      timeSlots: '10:00-12:00',
+      status: 'Pending',
+    ),
     RoomSlot(no: 3, room: 'LR-101', timeSlots: '13:00-15:00', status: 'Free'),
     RoomSlot(no: 4, room: 'LR-101', timeSlots: '15:00-17:00', status: 'Free'),
-    RoomSlot(no: 5, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Disabled'),
-    RoomSlot(no: 6, room: 'LR-102', timeSlots: '8:00-12:00', status: 'Disabled'),
+    RoomSlot(
+      no: 5,
+      room: 'LR-102',
+      timeSlots: '8:00-10:00',
+      status: 'Disabled',
+    ),
+    RoomSlot(
+      no: 6,
+      room: 'LR-102',
+      timeSlots: '8:00-12:00',
+      status: 'Disabled',
+    ),
     RoomSlot(no: 7, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Request'),
   ];
-  
+
   // กำหนดสี
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
@@ -43,9 +65,7 @@ class BaseBrowseScreen extends StatelessWidget {
         ),
         _buildRoomTypeCards(),
         // 🛑 ลบ _buildFilterRow() ออกตามความต้องการ
-        Expanded(
-          child: _buildRoomListTable(),
-        ),
+        Expanded(child: _buildRoomListTable()),
         if (actionButtons != null) actionButtons!,
       ],
     );
@@ -72,11 +92,11 @@ class BaseBrowseScreen extends StatelessWidget {
   Widget _buildRoomCard(String title, String subtitle) {
     return Expanded(
       // 🚀 แก้ไข: ใช้ SizedBox กำหนดความสูงที่แน่นอน (85.0) เพื่อให้ Card มีขนาดเท่ากันและเล็กลง
-      child: SizedBox( 
+      child: SizedBox(
         height: 85.0, // 👈 กำหนดความสูงคงที่เพื่อให้ Card มีขนาดเท่ากัน
         child: Container(
           // 🚀 แก้ไข: ลด Padding ลงจาก 12 เป็น 8 เพื่อลดขนาดโดยรวม
-          padding: const EdgeInsets.all(8), 
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: _cardColor,
             borderRadius: BorderRadius.circular(8),
@@ -84,16 +104,23 @@ class BaseBrowseScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             // 🚀 แก้ไข: ใช้ MainAxisAlignment.start และเพิ่ม Spacer
-            mainAxisAlignment: MainAxisAlignment.start, 
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), // ลดขนาดฟอนต์เล็กน้อย
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ), // ลดขนาดฟอนต์เล็กน้อย
               ),
               const Spacer(), // ใช้ Spacer เพื่อดันข้อความด้านล่างลงไป
               Text(
                 subtitle,
-                style: const TextStyle(color: Colors.white70, fontSize: 10), // ลดขนาดฟอนต์เล็กน้อย
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                ), // ลดขนาดฟอนต์เล็กน้อย
               ),
             ],
           ),
@@ -105,7 +132,7 @@ class BaseBrowseScreen extends StatelessWidget {
   Widget _buildRoomListTable() {
     return Container(
       // 🛑 ปรับ Margin ด้านบนจาก all(16.0) เป็น fromLTRB(16.0, 8.0, 16.0, 16.0) เพื่อให้ List Table เลื่อนขึ้น
-      margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0), 
+      margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -118,7 +145,9 @@ class BaseBrowseScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: _tableHeaderColor.withOpacity(0.7),
               borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
             ),
             child: const Text(
               '28 March 2024',
@@ -127,15 +156,49 @@ class BaseBrowseScreen extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            decoration: const BoxDecoration(
-              color: _tableHeaderColor,
-            ),
+            decoration: const BoxDecoration(color: _tableHeaderColor),
             child: const Row(
               children: [
-                Expanded(flex: 1, child: Text('No.', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                Expanded(flex: 2, child: Text('Room', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                Expanded(flex: 2, child: Text('Time slots', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), // Flex 2 เพื่อแก้ปัญหาล้นจอ
-                Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'No.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Room',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Time slots',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ), // Flex 2 เพื่อแก้ปัญหาล้นจอ
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Status',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -162,24 +225,36 @@ class BaseBrowseScreen extends StatelessWidget {
         children: [
           Expanded(flex: 1, child: Text('${slot.no}')),
           Expanded(flex: 2, child: Text(slot.room)),
-          Expanded(flex: 2, child: Text(slot.timeSlots)), // Flex 2 ให้ตรงกับ Header
+          Expanded(flex: 2, child: Text(slot.timeSlots)),
           Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: slot.statusColor,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  slot.status,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
+  flex: 2,
+  child: Align(
+    alignment: Alignment.centerLeft,
+    child: slot.status == 'Free'
+        ? ElevatedButton(
+            onPressed: () {
+              // เรียก callback ของ HomeTab เพื่อไปหน้า RequestForm
+              if (onSlotSelected != null) {
+                onSlotSelected!(slot);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: slot.statusColor,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             ),
+            child: const Text('Free', style: TextStyle(color: Colors.white, fontSize: 12)),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(color: slot.statusColor, borderRadius: BorderRadius.circular(4)),
+            child: Text(slot.status, style: const TextStyle(color: Colors.white, fontSize: 12)),
           ),
+  ),
+)
+
         ],
       ),
     );

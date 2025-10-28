@@ -1,45 +1,36 @@
 import 'package:flutter/material.dart';
 import '../models/room_data.dart'; 
 import '../screens/base_browse_screen.dart'; // ต้อง import base_browse_screen
-
+import 'package:mobile_project/user/request_form.dart'; //มันคือ request form ของ user
 // คลาสหลักสำหรับหน้า User Role
-class BrowseRoomListUser extends StatefulWidget {
-  const BrowseRoomListUser({super.key});
+class User extends StatefulWidget {
+  const User({super.key});
 
   @override
-  State<BrowseRoomListUser> createState() => _BrowseRoomListUserState();
+  State<User> createState() => _UserState();
 }
 
-class _BrowseRoomListUserState extends State<BrowseRoomListUser> {
-  final String userName = 'User001'; // สมมติชื่อผู้ใช้
-  
-  // กำหนดสีหลักของ Role นี้ (ใช้สีเดียวกับ Staff เพื่อความสม่ำเสมอของ App Bar)
-  static const Color _primaryColor = Color(0xFF476C5E);
-  static const Color _baseColor = Color(0xFFD8C38A);
-  static const Color _logoutColor = Colors.redAccent;
-
+class _UserState extends State<User> {
+final String userName = 'User001'; // สมมติชื่อผู้ใช้
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // User มีแค่ Home และ History
+      length: 3,
       child: Scaffold(
-        backgroundColor: _baseColor,
-        
-        // --- Custom AppBar ---
+        backgroundColor: const Color(0xFFD8C38A),
+        // appbar
         appBar: AppBar(
-          automaticallyImplyLeading: false, 
-          backgroundColor: _primaryColor,
+          backgroundColor: const Color(0xFF476C5E),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Image/Logo
+              // image bird
               Row(
                 children: [
-                  // ⚠️ ต้องมี Image file ใน assets/images/bird.png
-                  Image.asset('assets/images/bird.png', height: 40), 
+                  Image.asset('assets/images/bird.png', height: 50),
                   const SizedBox(width: 8),
                   const Text(
-                    'ROOM RESERVATION (User)', // ⬅️ เพิ่ม Role เข้าไปใน Title หลักแทน
+                    'ROOM RESERVATION',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -48,18 +39,18 @@ class _BrowseRoomListUserState extends State<BrowseRoomListUser> {
                   ),
                 ],
               ),
-              // User Name / Logout button
+              // staff name / logout button
               Row(
                 children: [
-                  Text(
+                   Text(
                     userName,
-                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
                   TextButton(
                     onPressed: () {},
                     style: TextButton.styleFrom(
-                      backgroundColor: _logoutColor,
+                      backgroundColor: Colors.redAccent,
                       side: const BorderSide(color: Colors.white),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 5,
@@ -80,25 +71,27 @@ class _BrowseRoomListUserState extends State<BrowseRoomListUser> {
           ),
         ),
 
-        // --- TabBarView ---
+        // tab bar
         body: TabBarView(
           children: [
-            // 1. Home Tab: ใช้ BaseBrowseScreen โดยไม่มีปุ่ม
-            HomeTab(userName: userName), 
-            // 2. History Tab:
-            const HistoryTab(),
+            // home
+            HomeTab(userName: userName),
+            // status
+            StatusTab(),
+            // history
+            HistoryTab(),
+            
           ],
         ),
-
-        // --- Bottom Navigation Bar (TabBar) ---
         bottomNavigationBar: Container(
-          color: _primaryColor,
+          color: const Color(0xFF476C5E),
           child: const TabBar(
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Home'),
+              Tab(icon: Icon(Icons.check_box_outlined), text: 'Check Status'),
               Tab(icon: Icon(Icons.schedule), text: 'History'),
             ],
           ),
@@ -111,47 +104,71 @@ class _BrowseRoomListUserState extends State<BrowseRoomListUser> {
 // ==========================
 // 1. Home Tab (Browse Room List)
 // ==========================
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   final String userName;
   const HomeTab({super.key, required this.userName});
 
-  // 🛑 ลบ _buildReservationButton() ออกตามคำขอ
-  /*
-  Widget _buildReservationButton() {
-    const Color reserveColor = Color(0xFF4CAF50); // เขียว
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.add_task, color: Colors.white),
-          label: const Text('New Reservation', style: TextStyle(color: Colors.white, fontSize: 18)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: reserveColor,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        ),
-      ),
-    );
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  RoomSlot? selectedSlot; 
+
+  void _goToRequestForm(RoomSlot slot) {
+    setState(() {
+      selectedSlot = slot;
+    });
   }
-  */
+
+  void _backToList() {
+    setState(() {
+      selectedSlot = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // ใช้ BaseBrowseScreen เป็น Home Tab
+    // ถ้า selectedSlot != null แสดง RequestForm
+    if (selectedSlot != null) {
+      return RequestForm(
+        roomName: selectedSlot!.room,
+        initialSlot: selectedSlot!.timeSlots,
+        onCancel: _backToList,
+      );
+    }
+
+    // ถ้า selectedSlot == null แสดง BaseBrowseScreen
     return BaseBrowseScreen(
       userRole: UserRole.user,
-      userName: userName,
-      // 🛑 ลบ actionButtons: _buildReservationButton() ออกไป (ตอนนี้ actionButtons เป็น null โดยปริยาย)
+      userName: widget.userName,
+      actionButtons: null,
+      onSlotSelected: _goToRequestForm,
     );
   }
 }
 
+
 // ==========================
-// 2. History Tab
+// 2. Status Tab
+// ==========================
+class StatusTab extends StatelessWidget {
+  const StatusTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        'My Reservation Status',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+
+// ==========================
+// 3. History Tab
 // ==========================
 class HistoryTab extends StatelessWidget {
   const HistoryTab({super.key});
