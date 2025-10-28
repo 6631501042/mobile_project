@@ -1,22 +1,18 @@
-// ========================== main.dart ==========================
-// Status (User) — วันละหนึ่งรายการ, ป้ายสถานะ Pending/Approved/Rejected
-// แก้เคส Overflow แบบหมดจด + โครงพร้อมต่อฐานข้อมูลภายหลัง
-
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const RoomReservationUserApp());
 
-// ===== THEME COLORS =====
+// ===== THEME COLORS (ตามภาพ) =====
 class AppColors {
-  static const finlandia = Color(0xFF51624F); // Top bar
-  static const hampton   = Color(0xFFE6D5A9); // Background
-  static const edward    = Color(0xFF9CB4AC); // Approved (เขียวอมเทา)
+  static const finlandia = Color(0xFF51624F); // top bar
+  static const hampton   = Color(0xFFE6D5A9); // พื้นหลัง + "สีในกล่อง"
   static const norway    = Color(0xFFAFBEA2);
+  static const edward    = Color(0xFF9CB4AC); // ชิป Approved
 
-  static const chipPending  = Color(0xFFFFF96F); // เหลืองอ่อน
-  static const chipApproved = edward;            // เขียวอมเทา
-  static const chipRejected = Color(0xFFFF9E9E); // ชมพูแดง
+  // ชิปสถานะ
+  static const chipPending  = Color(0xFFFFF96F); // เหลืองอ่อนตามภาพ
+  static const chipApproved = edward;            // เขียวอมเทาตามภาพ
+  static const chipRejected = Color(0xFFFF9E9E); // ชมพูแดงตามภาพ
 }
 
 // ===== DOMAIN =====
@@ -28,6 +24,7 @@ class UserReservation {
   final TimeOfDay start;
   final TimeOfDay end;
   final BookingStatus status;
+  final String approver;
 
   const UserReservation({
     required this.roomCode,
@@ -35,52 +32,45 @@ class UserReservation {
     required this.start,
     required this.end,
     required this.status,
+    required this.approver,
   });
-
-  UserReservation copyWith({BookingStatus? status}) => UserReservation(
-        roomCode: roomCode,
-        date: date,
-        start: start,
-        end: end,
-        status: status ?? this.status,
-      );
 }
 
-// ===== REPOSITORY (Mock) — พร้อมสลับเป็น Firestore/REST =====
-abstract class UserReservationRepository {
-  Stream<UserReservation?> watchToday(String userId);
-}
-
-class MockUserReservationRepository implements UserReservationRepository {
-  MockUserReservationRepository({this.autoResult = BookingStatus.rejected}) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    _current = UserReservation(
-      roomCode: 'LR-104',
-      date: today,
-      start: const TimeOfDay(hour: 8, minute: 0),
-      end: const TimeOfDay(hour: 10, minute: 0),
-      status: BookingStatus.pending,
-    );
-    _emit(_current);
-
-    // เดโม: เปลี่ยนสถานะอัตโนมัติหลัง 6 วิ (ไว้เห็นการสลับสี/ป้าย)
-    Future.delayed(const Duration(seconds: 6), () {
-      _current = _current?.copyWith(status: autoResult);
-      _emit(_current);
-    });
-  }
-
-  final BookingStatus autoResult; // ลองเป็น approved ก็ได้
-  final _ctrl = StreamController<UserReservation?>.broadcast();
-  UserReservation? _current;
-
-  @override
-  Stream<UserReservation?> watchToday(String userId) => _ctrl.stream;
-
-  void _emit(UserReservation? r) => _ctrl.add(r);
-  void dispose() => _ctrl.close();
-}
+// ===== MOCK DATA (ทำหน้าตาเหมือนภาพ) =====
+final mockReservations = <UserReservation>[
+  UserReservation(
+    roomCode: 'LR-105',
+    date: DateTime(2025, 9, 28),
+    start: const TimeOfDay(hour: 8, minute: 0),
+    end: const TimeOfDay(hour: 10, minute: 0),
+    status: BookingStatus.approved,
+    approver: 'Ajarn.Tick',
+  ),
+  UserReservation(
+    roomCode: 'MR-104',
+    date: DateTime(2025, 9, 24),
+    start: const TimeOfDay(hour: 15, minute: 0),
+    end: const TimeOfDay(hour: 17, minute: 0),
+    status: BookingStatus.rejected,
+    approver: 'Ajarn.Tick',
+  ),
+  UserReservation(
+    roomCode: 'SR-101',
+    date: DateTime(2025, 9, 20),
+    start: const TimeOfDay(hour: 10, minute: 0),
+    end: const TimeOfDay(hour: 12, minute: 0),
+    status: BookingStatus.approved,
+    approver: 'Ajarn.Tock',
+  ),
+  UserReservation(
+    roomCode: 'SR-106',
+    date: DateTime(2025, 9, 1),
+    start: const TimeOfDay(hour: 13, minute: 0),
+    end: const TimeOfDay(hour: 15, minute: 0),
+    status: BookingStatus.rejected,
+    approver: 'Ajarn.Tock',
+  ),
+];
 
 // ===== APP ROOT =====
 class RoomReservationUserApp extends StatelessWidget {
@@ -99,31 +89,10 @@ class RoomReservationUserApp extends StatelessWidget {
   }
 }
 
-// ===== MAIN PAGE =====
-class UserStatusPage extends StatefulWidget {
+// ===== PAGE =====
+class UserStatusPage extends StatelessWidget {
   final String userId;
   const UserStatusPage({super.key, required this.userId});
-
-  @override
-  State<UserStatusPage> createState() => _UserStatusPageState();
-}
-
-class _UserStatusPageState extends State<UserStatusPage> {
-  late final MockUserReservationRepository repo;
-
-  @override
-  void initState() {
-    super.initState();
-    repo = MockUserReservationRepository(
-      autoResult: BookingStatus.rejected, // หรือ BookingStatus.approved
-    );
-  }
-
-  @override
-  void dispose() {
-    repo.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,74 +100,47 @@ class _UserStatusPageState extends State<UserStatusPage> {
       backgroundColor: AppColors.hampton,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(72),
-        child: _TopBar(userId: widget.userId),
+        child: _TopBar(userId: userId),
       ),
       body: SafeArea(
-        // ===== โครงกัน Overflow: เติมเต็มสูงจอ, scroll ได้เมื่อจำเป็น =====
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 24),
-                        Text(
-                          'Status',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 44,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black.withOpacity(0.9),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            _Header('Room'),
-                            _Header('Action'),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        StreamBuilder<UserReservation?>(
-                          stream: repo.watchToday(widget.userId),
-                          builder: (context, snap) {
-                            final r = snap.data;
-                            if (r == null) {
-                              return const Padding(
-                                padding: EdgeInsets.only(top: 48),
-                                child: Text(
-                                  'No reservation today',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              );
-                            }
-                            return Align(
-                              alignment: Alignment.topCenter,
-                              child: _ReservationCard(res: r),
-                            );
-                          },
-                        ),
-                        const Spacer(), // ดัน bottom bar ชิดล่างจอ
-                        const _BottomBar(),
-                        const SizedBox(height: 8),
-                        Container(
-                          height: 2,
-                          width: 220,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          color: Colors.black.withOpacity(0.8),
-                        ),
-                      ],
-                    ),
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Text(
+                'Status',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 44,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black.withOpacity(0.9),
                 ),
               ),
-            );
-          },
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [_Header('Room'), _Header('Action')],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: mockReservations.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) =>
+                      _ReservationCard(res: mockReservations[i]),
+                ),
+              ),
+              const _BottomBar(),
+              const SizedBox(height: 8),
+              Container(
+                height: 2,
+                width: 220,
+                margin: const EdgeInsets.only(bottom: 16),
+                color: Colors.black.withOpacity(0.85),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -221,10 +163,10 @@ class _TopBar extends StatelessWidget {
           height: 72,
           child: Row(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 22,
                 backgroundColor: AppColors.norway,
-                child: const Text('🐦', style: TextStyle(fontSize: 22)),
+                child: Text('🐦', style: TextStyle(fontSize: 22)),
               ),
               const SizedBox(width: 10),
               const Column(
@@ -295,7 +237,7 @@ class _Header extends StatelessWidget {
       );
 }
 
-// ===== RESERVATION CARD (แก้ล้นภายในการ์ดด้วย IntrinsicHeight) =====
+// ===== CARD (สีในกล่อง = Hampton ตามภาพ) =====
 class _ReservationCard extends StatelessWidget {
   final UserReservation res;
   const _ReservationCard({required this.res});
@@ -303,20 +245,15 @@ class _ReservationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateStr =
-        '${_two(res.date.day)} ${_month(res.date.month)} ${res.date.year}';
-    String hhmm(TimeOfDay t) => '${t.hour}.${_two(t.minute)}';
+        '${_pad(res.date.day)} ${_month(res.date.month)} ${res.date.year}';
+    String hhmm(TimeOfDay t) => '${t.hour}.${_pad(t.minute)}';
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(
-        minHeight: 118, // สูงพอดีตามภาพ
-        // ไม่กำหนด maxHeight เพื่อกันล้นแบบเศษพิกเซล
-      ),
-      margin: const EdgeInsets.only(top: 6),
       decoration: BoxDecoration(
-        color: AppColors.hampton.withOpacity(0.88),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.6), width: 1.2),
+        color: AppColors.hampton, // <<— สีในกล่องตามภาพ
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withOpacity(0.85), width: 1.3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.28),
@@ -325,66 +262,82 @@ class _ReservationCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Container(
-        margin: const EdgeInsets.all(8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.96),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        // <<<<<< กัน Overflow ภายในการ์ด
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // ข้อมูลซ้าย
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // ไม่ขยายเกิน
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('LR-104',
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black.withOpacity(0.95))),
-                    const SizedBox(height: 6),
-                    Text(dateStr,
-                        style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black.withOpacity(0.45),
-                            fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text('${hhmm(res.start)}-${hhmm(res.end)}',
-                        style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black.withOpacity(0.50),
-                            fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // ป้ายสถานะขวา
-              _StatusChip(res.status),
-            ],
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // LEFT: room / date / time
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(res.roomCode,
+                    style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black.withOpacity(0.95))),
+                const SizedBox(height: 6),
+                Text(dateStr,
+                    style: TextStyle(
+                        fontSize: 22,
+                        color: Colors.black.withOpacity(0.45),
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Text('${hhmm(res.start)}-${hhmm(res.end)}',
+                    style: TextStyle(
+                        fontSize: 22,
+                        color: Colors.black.withOpacity(0.50),
+                        fontWeight: FontWeight.w700)),
+              ],
+            ),
           ),
-        ),
+
+          const SizedBox(width: 12),
+
+          // RIGHT: Status chip + "By" + approver (จัดกลางตามภาพ)
+          SizedBox(
+            width: 150, // ให้สัดส่วนเหมือนภาพ
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _StatusChip(res.status),
+                const SizedBox(height: 10),
+                Text('By',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.black.withOpacity(0.75),
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                Text(res.approver,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 22,
+                        color: Colors.black.withOpacity(0.95),
+                        fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  String _two(int v) => v.toString().padLeft(2, '0');
+  String _pad(int v) => v.toString().padLeft(2, '0');
   String _month(int m) {
     const names = [
+      '', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr',
+      'May', 'Jun', 'Jul', 'Aug'
+    ];
+    // ถ้าอยากเรียง Jan-Dec ให้แทนรายชื่อตามปกติได้เลย
+    const normal = [
       '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return names[m];
+    return normal[m];
   }
 }
 
-// ===== STATUS CHIP (pill + เงา) =====
+// ===== STATUS CHIP (pill สีตามภาพ) =====
 class _StatusChip extends StatelessWidget {
   final BookingStatus status;
   const _StatusChip(this.status);
@@ -395,35 +348,26 @@ class _StatusChip extends StatelessWidget {
     String label;
     switch (status) {
       case BookingStatus.pending:
-        bg = AppColors.chipPending;
+        bg = AppColors.chipPending;  label = 'Approved'; // (แค่ตัวอย่าง ถ้าอยากมี Pending ก็โชว์ Pending)
         label = 'Pending';
         break;
       case BookingStatus.approved:
-        bg = AppColors.chipApproved;
-        label = 'Approved';
-        break;
+        bg = AppColors.chipApproved; label = 'Approved'; break;
       case BookingStatus.rejected:
-        bg = AppColors.chipRejected;
-        label = 'Rejected';
-        break;
+        bg = AppColors.chipRejected; label = 'Rejected'; break;
     }
 
-    return PhysicalModel(
-      color: Colors.transparent,
-      elevation: 2,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 20,
         ),
       ),
     );
