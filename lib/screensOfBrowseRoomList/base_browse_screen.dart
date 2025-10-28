@@ -1,49 +1,33 @@
 import 'package:flutter/material.dart';
-import '../models/room_data.dart';
+import '../modelsData/room_data.dart';
 
-
-class BaseBrowseScreen extends StatelessWidget {
+class BaseBrowseScreen extends StatefulWidget {
   final UserRole userRole;
   final String userName;
   final Widget? actionButtons; // ปุ่ม Add/Edit / Reserve / Approve-Reject
-final void Function(RoomSlot)? onSlotSelected;
+  final void Function(RoomSlot)? onSlotSelected;
 
   const BaseBrowseScreen({
     super.key,
     required this.userRole,
     required this.userName,
     this.actionButtons,
-    this.onSlotSelected, 
+    this.onSlotSelected,
   });
+@override
+  State<BaseBrowseScreen> createState() => _BaseBrowseScreenState();
+}
+  class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
+  RoomSlot? _selectedSlot; // ✅ เก็บแถวที่ถูกเลือกไว้
 
-  // ข้อมูลจำลอง (Mock Data)
+  // ข้อมูลจำลองเดิม
   static final List<RoomSlot> _roomSlots = [
-    RoomSlot(
-      no: 1,
-      room: 'LR-101',
-      timeSlots: '8:00-10:00',
-      status: 'Reserved',
-    ),
-    RoomSlot(
-      no: 2,
-      room: 'LR-101',
-      timeSlots: '10:00-12:00',
-      status: 'Pending',
-    ),
+    RoomSlot(no: 1, room: 'LR-101', timeSlots: '8:00-10:00', status: 'Reserved'),
+    RoomSlot(no: 2, room: 'LR-101', timeSlots: '10:00-12:00', status: 'Pending'),
     RoomSlot(no: 3, room: 'LR-101', timeSlots: '13:00-15:00', status: 'Free'),
     RoomSlot(no: 4, room: 'LR-101', timeSlots: '15:00-17:00', status: 'Free'),
-    RoomSlot(
-      no: 5,
-      room: 'LR-102',
-      timeSlots: '8:00-10:00',
-      status: 'Disabled',
-    ),
-    RoomSlot(
-      no: 6,
-      room: 'LR-102',
-      timeSlots: '8:00-12:00',
-      status: 'Disabled',
-    ),
+    RoomSlot(no: 5, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Disabled'),
+    RoomSlot(no: 6, room: 'LR-102', timeSlots: '8:00-12:00', status: 'Disabled'),
     RoomSlot(no: 7, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Request'),
   ];
 
@@ -66,7 +50,8 @@ final void Function(RoomSlot)? onSlotSelected;
         _buildRoomTypeCards(),
         // 🛑 ลบ _buildFilterRow() ออกตามความต้องการ
         Expanded(child: _buildRoomListTable()),
-        if (actionButtons != null) actionButtons!,
+        if (widget.actionButtons != null) widget.actionButtons!,
+
       ],
     );
   }
@@ -215,48 +200,49 @@ final void Function(RoomSlot)? onSlotSelected;
     );
   }
 
-  Widget _buildTableRow(RoomSlot slot, int index) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black12, width: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 1, child: Text('${slot.no}')),
-          Expanded(flex: 2, child: Text(slot.room)),
-          Expanded(flex: 2, child: Text(slot.timeSlots)),
-          Expanded(
-  flex: 2,
-  child: Align(
-    alignment: Alignment.centerLeft,
-    child: slot.status == 'Free'
-        ? ElevatedButton(
-            onPressed: () {
-              // เรียก callback ของ HomeTab เพื่อไปหน้า RequestForm
-              if (onSlotSelected != null) {
-                onSlotSelected!(slot);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: slot.statusColor,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-            ),
-            child: const Text('Free', style: TextStyle(color: Colors.white, fontSize: 12)),
-          )
-        : Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: slot.statusColor, borderRadius: BorderRadius.circular(4)),
-            child: Text(slot.status, style: const TextStyle(color: Colors.white, fontSize: 12)),
-          ),
-  ),
-)
+    Widget _buildTableRow(RoomSlot slot, int index) {
+    bool isSelected = _selectedSlot == slot;
 
-        ],
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSlot = slot;
+        });
+        if (widget.onSlotSelected != null) {
+          widget.onSlotSelected!(slot);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.amber.withOpacity(0.3) : Colors.transparent,
+          border: const Border(
+            bottom: BorderSide(color: Colors.black12, width: 0.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(flex: 1, child: Text('${slot.no}')),
+            Expanded(flex: 2, child: Text(slot.room)),
+            Expanded(flex: 2, child: Text(slot.timeSlots)),
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: slot.statusColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  slot.status,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
 }
