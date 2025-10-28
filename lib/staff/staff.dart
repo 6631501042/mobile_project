@@ -116,7 +116,6 @@ class HomeTab extends StatelessWidget {
 // ==========================
 // history
 // ==========================
-
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
 
@@ -137,7 +136,7 @@ class _HistoryTabState extends State<HistoryTab> {
       ),
       HistoryItem(
         reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "MR-104",
+        roomCode: "LR-104",
         date: "24 Sep 2025",
         time: "15.00-17.00",
         status: "Rejected",
@@ -145,63 +144,21 @@ class _HistoryTabState extends State<HistoryTab> {
         rejectReason: "Room already booked by another department.",
       ),
       HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "SR-101",
+        reqIdAndUser: "6E3510/xxx Lion Sins",
+        roomCode: "MR-101",
         date: "20 Sep 2025",
         time: "10.00-12.00",
         status: "Approved",
         approverName: "Ajarn.Tock",
       ),
       HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "SR-106",
-        date: "10 Sep 2025",
+        reqIdAndUser: "6E3510/xxx Nick Sakon",
+        roomCode: "SR-110",
+        date: "1 Sep 2025",
         time: "13.00-15.00",
         status: "Rejected",
         approverName: "Ajarn.Tock",
         rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "9 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "8 Sep 2025",
-        time: "8.00-10.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "7 Sep 2025",
-        time: "8.00-10.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "6 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "5 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
       ),
     ];
   }
@@ -227,7 +184,7 @@ class _HistoryTabState extends State<HistoryTab> {
                     children: const [
                       Center(
                         child: Text(
-                          "History User",
+                          "History Staff",
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w600,
@@ -240,7 +197,7 @@ class _HistoryTabState extends State<HistoryTab> {
                         children: [
                           Expanded(
                             child: Text(
-                              "Room",
+                              "User/Room",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
@@ -262,7 +219,6 @@ class _HistoryTabState extends State<HistoryTab> {
                     ],
                   ),
                 ),
-
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.only(
@@ -275,7 +231,7 @@ class _HistoryTabState extends State<HistoryTab> {
                       final item = dataList[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: HistoryCardUser(item: item),
+                        child: HistoryCardStaff(item: item),
                       );
                     },
                   ),
@@ -310,10 +266,10 @@ class HistoryItem {
   });
 }
 
-// ================== HISTORY CARD (USER STYLE) ==================
-class HistoryCardUser extends StatelessWidget {
+// ================== HISTORY CARD (STAFF STYLE) ==================
+class HistoryCardStaff extends StatelessWidget {
   final HistoryItem item;
-  const HistoryCardUser({super.key, required this.item});
+  const HistoryCardStaff({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +296,6 @@ class HistoryCardUser extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // main row (left info + right status)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -359,8 +314,7 @@ class HistoryCardUser extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(4),
@@ -378,26 +332,16 @@ class HistoryCardUser extends StatelessWidget {
                   const SizedBox(height: 6),
                   const Text(
                     "By",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black),
                   ),
                   Text(
                     item.approverName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
                   ),
                 ],
               ),
             ],
           ),
-
-          // 👇 move the reason section OUTSIDE the Row
           if (isRejected) ...[
             const SizedBox(height: 8),
             const Text(
@@ -412,10 +356,7 @@ class HistoryCardUser extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 item.rejectReason ?? "No reason provided",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
                 softWrap: true,
                 overflow: TextOverflow.visible,
               ),
