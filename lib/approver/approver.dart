@@ -26,7 +26,7 @@ class _ApproverState extends State<Approver> {
                   Image.asset('assets/images/bird.png', height: 50),
                   const SizedBox(width: 8),
                   const Text(
-                    'ROOM RESERVATION',
+                    'ROOM \nRESERVATION',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -52,6 +52,7 @@ class _ApproverState extends State<Approver> {
                         horizontal: 5,
                         vertical: 5,
                       ),
+                      minimumSize: Size(40, 25),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -136,15 +137,253 @@ class StatusTab extends StatelessWidget {
 // ==========================
 // history
 // ==========================
-class HistoryTab extends StatelessWidget {
+class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
 
   @override
+  State<HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<HistoryTab> {
+  // mock data list (will be rendered in a loop)
+  List<HistoryItem> _mockData() {
+    return [
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-105",
+        date: "28 Sep 2025",
+        time: "8.00-10.00",
+        status: "Approved",
+        approverName: "Ajarn.Tick",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-104",
+        date: "24 Sep 2025",
+        time: "15.00-17.00",
+        status: "Rejected",
+        approverName: "Ajarn.Tick",
+        rejectReason: "Room already booked by another department.",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Lion Sins",
+        roomCode: "MR-101",
+        date: "20 Sep 2025",
+        time: "10.00-12.00",
+        status: "Approved",
+        approverName: "Ajarn.Tock",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Nick Sakon",
+        roomCode: "SR-110",
+        date: "1 Sep 2025",
+        time: "13.00-15.00",
+        status: "Rejected",
+        approverName: "Ajarn.Tock",
+        rejectReason: "Room already booked by another department.",
+      ),
+    ];
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
+    final dataList = _mockData();
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            width: 360,
+            color: const Color(0xFFE6D5A9),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Center(
+                        child: Text(
+                          "History Approver",
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Room",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Action",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // list section
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                    itemCount: dataList.length,
+                    itemBuilder: (context, index) {
+                      final item = dataList[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: HistoryCardApprover(item: item),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ================== DATA MODEL ==================
+class HistoryItem {
+  final String reqIdAndUser;
+  final String roomCode;
+  final String date;
+  final String time;
+  final String status;
+  final String approverName;
+  final String? rejectReason;
+
+  HistoryItem({
+    required this.reqIdAndUser,
+    required this.roomCode,
+    required this.date,
+    required this.time,
+    required this.status,
+    required this.approverName,
+    this.rejectReason,
+  });
+}
+
+// ================== HISTORY CARD (APPROVER STYLE) ==================
+class HistoryCardApprover extends StatelessWidget {
+  final HistoryItem item;
+  const HistoryCardApprover({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isApproved = item.status.toLowerCase() == "approved";
+    final bool isRejected = item.status.toLowerCase() == "rejected";
+
+    final Color pillBg = isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
+    final Color pillText = isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2EDD9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3)],
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // main row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _infoText(item.reqIdAndUser, bold: true),
+                    _infoText(item.roomCode, bold: true),
+                    _infoText(item.date),
+                    _infoText(item.time),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: pillBg,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: pillBorder, width: 1),
+                    ),
+                    child: Text(
+                      item.status,
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pillText),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text("By", style: TextStyle(fontSize: 14, color: Colors.black)),
+                  Text(item.approverName,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
+                ],
+              ),
+            ],
+          ),
+
+          if (isRejected) ...[
+            const SizedBox(height: 8),
+            const Text(
+              "Reason for Rejection:",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB52125)),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                item.rejectReason ?? "No reason provided",
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                softWrap: true,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _infoText(String text, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
       child: Text(
-        'Reservation History',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        text,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+          color: Colors.black,
+        ),
       ),
     );
   }

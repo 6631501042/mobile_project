@@ -52,6 +52,7 @@ class _UserState extends State<User> {
                         horizontal: 5,
                         vertical: 5,
                       ),
+                      minimumSize: Size(40, 25),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -320,12 +321,15 @@ class HistoryCardUser extends StatelessWidget {
     final bool isApproved = item.status.toLowerCase() == "approved";
     final bool isRejected = item.status.toLowerCase() == "rejected";
 
-    final Color pillBg =
-        isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
-    final Color pillBorder =
-        isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
-    final Color pillText =
-        isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
+    final Color pillBg = isApproved
+        ? const Color(0xFFE4E9EE)
+        : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved
+        ? const Color(0xFF6D7A86)
+        : const Color(0xFFB52125);
+    final Color pillText = isApproved
+        ? const Color(0xFF2D3A43)
+        : const Color(0xFFB52125);
 
     return Container(
       decoration: BoxDecoration(
@@ -359,8 +363,10 @@ class HistoryCardUser extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(4),
@@ -412,10 +418,7 @@ class HistoryCardUser extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 item.rejectReason ?? "No reason provided",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
                 softWrap: true,
                 overflow: TextOverflow.visible,
               ),

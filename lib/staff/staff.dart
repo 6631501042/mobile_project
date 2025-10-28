@@ -26,7 +26,7 @@ class _StaffState extends State<Staff> {
                   Image.asset('assets/images/bird.png', height: 50),
                   const SizedBox(width: 8),
                   const Text(
-                    'ROOM RESERVATION',
+                    'ROOM \nRESERVATION',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -52,6 +52,7 @@ class _StaffState extends State<Staff> {
                         horizontal: 5,
                         vertical: 5,
                       ),
+                      minimumSize: Size(40, 25),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -276,12 +277,15 @@ class HistoryCardStaff extends StatelessWidget {
     final bool isApproved = item.status.toLowerCase() == "approved";
     final bool isRejected = item.status.toLowerCase() == "rejected";
 
-    final Color pillBg =
-        isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
-    final Color pillBorder =
-        isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
-    final Color pillText =
-        isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
+    final Color pillBg = isApproved
+        ? const Color(0xFFE4E9EE)
+        : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved
+        ? const Color(0xFF6D7A86)
+        : const Color(0xFFB52125);
+    final Color pillText = isApproved
+        ? const Color(0xFF2D3A43)
+        : const Color(0xFFB52125);
 
     return Container(
       decoration: BoxDecoration(
@@ -314,7 +318,10 @@ class HistoryCardStaff extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(4),
@@ -332,11 +339,19 @@ class HistoryCardStaff extends StatelessWidget {
                   const SizedBox(height: 6),
                   const Text(
                     "By",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
                   ),
                   Text(
                     item.approverName,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
                 ],
               ),

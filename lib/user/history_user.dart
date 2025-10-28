@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-// ================== PAGE: HISTORY STAFF ==================
-class HistoryStaffPage extends StatefulWidget {
-  const HistoryStaffPage({super.key});
+// ================== PAGE: HISTORY APPROVER ==================
+class HistoryApproverPage extends StatefulWidget {
+  const HistoryApproverPage({super.key});
 
   @override
-  State<HistoryStaffPage> createState() => _HistoryStaffPageState();
+  State<HistoryApproverPage> createState() => _HistoryApproverPageState();
 }
 
-class _HistoryStaffPageState extends State<HistoryStaffPage> {
+class _HistoryApproverPageState extends State<HistoryApproverPage> {
+  // mock data list (will be rendered in a loop)
   List<HistoryItem> _mockData() {
     return [
       HistoryItem(
@@ -62,7 +63,7 @@ class _HistoryStaffPageState extends State<HistoryStaffPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TopBar(titleRightText: "Staff01"),
+                TopBar(titleRightText: "Ajarn.Tick"),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: Column(
@@ -70,7 +71,7 @@ class _HistoryStaffPageState extends State<HistoryStaffPage> {
                     children: const [
                       Center(
                         child: Text(
-                          "History Staff",
+                          "History Approver",
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w600,
@@ -83,7 +84,7 @@ class _HistoryStaffPageState extends State<HistoryStaffPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              "User/Room",
+                              "Room",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
@@ -105,23 +106,22 @@ class _HistoryStaffPageState extends State<HistoryStaffPage> {
                     ],
                   ),
                 ),
+
+                // list section
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 8,
-                    ),
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
                     itemCount: dataList.length,
                     itemBuilder: (context, index) {
                       final item = dataList[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: HistoryCardStaff(item: item),
+                        child: HistoryCardApprover(item: item),
                       );
                     },
                   ),
                 ),
+
                 const BottomNavBar(),
               ],
             ),
@@ -174,10 +174,7 @@ class TopBar extends StatelessWidget {
                 height: 28,
                 decoration: const BoxDecoration(shape: BoxShape.circle),
                 clipBehavior: Clip.hardEdge,
-                child: Image.asset(
-                  'assets/images/bird.png',
-                  fit: BoxFit.cover,
-                ),
+                child: Image.asset('assets/images/bird.png', fit: BoxFit.cover),
               ),
               const SizedBox(width: 6),
               const Column(
@@ -200,30 +197,23 @@ class TopBar extends StatelessWidget {
           const Spacer(),
           Text(
             titleRightText,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white),
           ),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
-              // TODO: Navigator.push(context, MaterialPageRoute(builder: (_) => LogoutPage()));
+              // Example navigation:
+              // Navigator.push(context, MaterialPageRoute(builder: (_) => const LogoutPage()));
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               decoration: BoxDecoration(
-                color: Color(0xFFB52125),
+                color: const Color(0xFFB52125),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
                 "LOGOUT",
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -233,36 +223,32 @@ class TopBar extends StatelessWidget {
   }
 }
 
-// ================== HISTORY CARD (STAFF STYLE) ==================
-class HistoryCardStaff extends StatelessWidget {
+// ================== HISTORY CARD (APPROVER STYLE) ==================
+class HistoryCardApprover extends StatelessWidget {
   final HistoryItem item;
-  const HistoryCardStaff({super.key, required this.item});
+  const HistoryCardApprover({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
     final bool isApproved = item.status.toLowerCase() == "approved";
     final bool isRejected = item.status.toLowerCase() == "rejected";
 
-    final Color pillBg =
-        isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
-    final Color pillBorder =
-        isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
-    final Color pillText =
-        isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
+    final Color pillBg = isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
+    final Color pillText = isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF2EDD9),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFF8E8A76), width: 1),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3)],
       ),
       padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // main row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -289,35 +275,23 @@ class HistoryCardStaff extends StatelessWidget {
                     ),
                     child: Text(
                       item.status,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: pillText,
-                      ),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pillText),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    "By",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.black),
-                  ),
-                  Text(
-                    item.approverName,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
-                  ),
+                  const Text("By", style: TextStyle(fontSize: 14, color: Colors.black)),
+                  Text(item.approverName,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
                 ],
               ),
             ],
           ),
+
           if (isRejected) ...[
             const SizedBox(height: 8),
             const Text(
               "Reason for Rejection:",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFB52125),
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB52125)),
             ),
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -371,19 +345,13 @@ class BottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavIconButton(icon: Icons.home_outlined, onTap: () {}),
+              _NavIconButton(icon: Icons.check_box_outlined, onTap: () {}),
               _NavIconButton(icon: Icons.history, onTap: () {}),
               _NavIconButton(icon: Icons.dashboard_outlined, onTap: () {}),
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              SizedBox(width: 45),
-              _NavHighlightBar(),
-              SizedBox(width: 45),
-            ],
-          ),
+          const _NavHighlightBar(),
         ],
       ),
     );
@@ -397,10 +365,7 @@ class _NavIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Icon(icon, color: Colors.black, size: 28),
-    );
+    return GestureDetector(onTap: onTap, child: Icon(icon, color: Colors.black, size: 28));
   }
 }
 
