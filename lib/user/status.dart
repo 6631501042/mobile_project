@@ -4,9 +4,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const RoomReservationApp());
-}
 
 // ---------------------------------------------
 // SECTION 1: Theme & Constants (สีตามที่ให้ไว้)
