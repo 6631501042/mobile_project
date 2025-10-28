@@ -1,130 +1,14 @@
 import 'package:flutter/material.dart';
 
-class Staff extends StatefulWidget {
-  const Staff({super.key});
+// ================== PAGE: HISTORY USER ==================
+class HistoryUserPage extends StatefulWidget {
+  const HistoryUserPage({super.key});
 
   @override
-  State<Staff> createState() => _StaffState();
+  State<HistoryUserPage> createState() => _HistoryUserPageState();
 }
 
-class _StaffState extends State<Staff> {
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFD8C38A),
-        // appbar
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF476C5E),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // image bird
-              Row(
-                children: [
-                  Image.asset('assets/images/bird.png', height: 50),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'ROOM RESERVATION',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              // staff name / logout button
-              Row(
-                children: [
-                  const Text(
-                    'Staff001',
-                    style: TextStyle(fontSize: 12, color: Colors.white),
-                  ),
-                  const SizedBox(width: 10),
-                  TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      side: const BorderSide(color: Colors.white),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'LOGOUT',
-                      style: TextStyle(fontSize: 12, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // tab bar
-        body: const TabBarView(
-          children: [
-            // home
-            HomeTab(),
-            // history
-            HistoryTab(),
-            // dashboard
-            DashboardTab(),
-          ],
-        ),
-        bottomNavigationBar: Container(
-          color: const Color(0xFF476C5E),
-          child: const TabBar(
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: [
-              Tab(icon: Icon(Icons.home), text: 'Home'),
-              Tab(icon: Icon(Icons.schedule), text: 'History'),
-              Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================
-// home
-// ==========================
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Welcome to Home',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}
-
-// ==========================
-// history
-// ==========================
-
-class HistoryTab extends StatefulWidget {
-  const HistoryTab({super.key});
-
-  @override
-  State<HistoryTab> createState() => _HistoryTabState();
-}
-
-class _HistoryTabState extends State<HistoryTab> {
+class _HistoryUserPageState extends State<HistoryUserPage> {
   List<HistoryItem> _mockData() {
     return [
       HistoryItem(
@@ -220,6 +104,8 @@ class _HistoryTabState extends State<HistoryTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                TopBar(titleRightText: "6E3510/xxx"),
+
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: Column(
@@ -280,6 +166,8 @@ class _HistoryTabState extends State<HistoryTab> {
                     },
                   ),
                 ),
+
+                const BottomNavBar(),
               ],
             ),
           ),
@@ -308,6 +196,91 @@ class HistoryItem {
     required this.approverName,
     this.rejectReason,
   });
+}
+
+// ================== TOP BAR ==================
+class TopBar extends StatelessWidget {
+  final String titleRightText;
+
+  const TopBar({super.key, required this.titleRightText});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      color: const Color(0xFF51624F),
+      child: Row(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Image.asset(
+                  'assets/images/bird.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "ROOM\nRESERVATION",
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.1,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            titleRightText,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              // TODO: Add logout logic here
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
+              decoration: BoxDecoration(
+                color: Color(0xFFB52125),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                "LOGOUT",
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ================== HISTORY CARD (USER STYLE) ==================
@@ -444,85 +417,78 @@ class HistoryCardUser extends StatelessWidget {
   }
 }
 
-// ==========================
-// dashboard
-// ==========================
-class DashboardTab extends StatelessWidget {
-  const DashboardTab({super.key});
+// ================== BOTTOM NAV BAR ==================
+class BottomNavBar extends StatelessWidget {
+  const BottomNavBar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFDCCB9D),
+        border: Border(top: BorderSide(color: Color(0xFF2E2B20), width: 2)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 30),
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavIconButton(
+                icon: Icons.home_outlined,
+                onTap: () {
+                  // TODO
+                },
+              ),
+              _NavIconButton(
+                icon: Icons.check_box_outlined,
+                onTap: () {
+                  // TODO
+                },
+              ),
+              _NavIconButton(
+                icon: Icons.history,
+                onTap: () {
+                  // TODO
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          const Text(
-            '20',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              crossAxisSpacing: 5,
-              mainAxisSpacing: 5,
-              children: [
-                _card(
-                  'assets/images/free.png',
-                  'Free Slots',
-                  '5',
-                  Colors.greenAccent[100]!,
-                ),
-                _card(
-                  'assets/images/pending.png',
-                  'Pending Slots',
-                  '5',
-                  Colors.amberAccent[100]!,
-                ),
-                _card(
-                  'assets/images/reserve.png',
-                  'Reserved Slots',
-                  '7',
-                  Colors.blueAccent[100]!,
-                ),
-                _card(
-                  'assets/images/disable.png',
-                  'Disabled Rooms',
-                  '3',
-                  Colors.redAccent[100]!,
-                ),
-              ],
-            ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const [
+              SizedBox(width: 45),
+              SizedBox(width: 45),
+              _NavHighlightBar(),
+            ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _card(String img, String title, String value, Color color) {
-    return Card(
-      color: color,
-      elevation: 4,
-      child: InkWell(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(img, height: 60, fit: BoxFit.cover),
-              const SizedBox(height: 10),
-              Text(title, style: const TextStyle(fontSize: 16)),
-              Text(value, style: const TextStyle(fontSize: 16)),
-            ],
-          ),
-        ),
-      ),
+class _NavIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _NavIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(icon, color: Colors.black, size: 28),
     );
+  }
+}
+
+class _NavHighlightBar extends StatelessWidget {
+  const _NavHighlightBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 40, height: 4, color: Color(0xFF2E2B20));
   }
 }

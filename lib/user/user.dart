@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class Staff extends StatefulWidget {
-  const Staff({super.key});
+class User extends StatefulWidget {
+  const User({super.key});
 
   @override
-  State<Staff> createState() => _StaffState();
+  State<User> createState() => _UserState();
 }
 
-class _StaffState extends State<Staff> {
+class _UserState extends State<User> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -26,7 +26,7 @@ class _StaffState extends State<Staff> {
                   Image.asset('assets/images/bird.png', height: 50),
                   const SizedBox(width: 8),
                   const Text(
-                    'ROOM RESERVATION',
+                    'ROOM \nRESERVATION',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -35,11 +35,11 @@ class _StaffState extends State<Staff> {
                   ),
                 ],
               ),
-              // staff name / logout button
+              // user name / logout button
               Row(
                 children: [
                   const Text(
-                    'Staff001',
+                    '6631501xxx',
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
