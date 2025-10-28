@@ -1,35 +1,151 @@
+// ---------------------------------------------
+// lib/user/test.dart  (Approver page, ไม่มี main())
+// ---------------------------------------------
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-/// ===== THEME COLORS =====
+// ============ THEME ============
 class AppColors {
   static const finlandia = Color(0xFF51624F); // Top bar
-  static const hampton   = Color(0xFFE6D5A9); // Page background
-  static const norway    = Color(0xFFAFBEA2); // Logo circle bg
-  static const edward    = Color(0xFF9CB4AC); // Approved chip
-  static const chipPending  = Color(0xFFFFF96F); // Pending chip
-  static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
+  static const hampton   = Color(0xFFE6D5A9); // Background
+  static const norway    = Color(0xFFAFBEA2);
+  static const edward    = Color(0xFF9CB4AC); // Approve button
+  static const rejected  = Color(0xFFFF9E9E); // Reject button
+  static const cardBg    = Color(0xFFF9F5E5);
 }
 
-/// ===== MODEL =====
-enum BookingStatus { pending, approved, rejected }
+// ============ MODELS ============
+enum ReservationStatus { pending, approved, rejected }
 
-class UserReservation {
+class Reservation {
+  final String id;
+  final String userId;
+  final String userName;
   final String roomCode;
   final DateTime date;
-  final TimeOfDay start;
-  final TimeOfDay end;
-  final BookingStatus status;
+  final TimeOfDay start, end;
+  final ReservationStatus status;
 
-  const UserReservation({
+  const Reservation({
+    required this.id,
+    required this.userId,
+    required this.userName,
     required this.roomCode,
     required this.date,
     required this.start,
     required this.end,
     required this.status,
   });
+
+  Reservation copyWith({ReservationStatus? status}) => Reservation(
+        id: id,
+        userId: userId,
+        userName: userName,
+        roomCode: roomCode,
+        date: date,
+        start: start,
+        end: end,
+        status: status ?? this.status,
+      );
 }
 
-/// ===== PAGE (USER) — Stateful =====
+class ReservationLog {
+  final String reservationId;
+  final String approverId;
+  final ReservationStatus result;
+  final DateTime timestamp;
+
+  const ReservationLog({
+    required this.reservationId,
+    required this.approverId,
+    required this.result,
+    required this.timestamp,
+  });
+}
+
+// ============ REPOSITORY ============
+abstract class ReservationRepository {
+  Stream<List<Reservation>> watchPendingForApprover(String approverId);
+  Future<void> addIncomingRequest(Reservation r);
+  Future<void> setStatus({
+    required String reservationId,
+    required ReservationStatus status,
+    required String approverId,
+  });
+  Stream<List<ReservationLog>> watchLogs(String approverId);
+}
+
+class MockReservationRepository implements ReservationRepository {
+  MockReservationRepository() {
+    _pending = [
+      Reservation(
+        id: 'r1',
+        userId: '6631501xxx',
+        userName: 'Leo Jone',
+        roomCode: 'LR-105',
+        date: DateTime(2025, 9, 28),
+        start: const TimeOfDay(hour: 8, minute: 0),
+        end: const TimeOfDay(hour: 10, minute: 0),
+        status: ReservationStatus.pending,
+      ),
+      Reservation(
+        id: 'r2',
+        userId: '6631501xxx',
+        userName: 'Lion Sins',
+        roomCode: 'MR-110',
+        date: DateTime(2025, 9, 28),
+        start: const TimeOfDay(hour: 13, minute: 0),
+        end: const TimeOfDay(hour: 15, minute: 0),
+        status: ReservationStatus.pending,
+      ),
+    ];
+    _pendingCtrl.add(_pending);
+    _logsCtrl.add(const []);
+  }
+
+  late List<Reservation> _pending;
+  final _pendingCtrl = StreamController<List<Reservation>>.broadcast();
+  final _logsCtrl = StreamController<List<ReservationLog>>.broadcast();
+  List<ReservationLog> _logs = [];
+
+  @override
+  Stream<List<Reservation>> watchPendingForApprover(String approverId) =>
+      _pendingCtrl.stream;
+
+  @override
+  Future<void> addIncomingRequest(Reservation r) async {
+    _pending = [..._pending, r];
+    _pendingCtrl.add(_pending);
+  }
+
+  @override
+  Future<void> setStatus({
+    required String reservationId,
+    required ReservationStatus status,
+    required String approverId,
+  }) async {
+    final idx = _pending.indexWhere((e) => e.id == reservationId);
+    if (idx == -1) return;
+    final updated = _pending[idx].copyWith(status: status);
+    _pending.removeAt(idx);
+    _pendingCtrl.add(List.unmodifiable(_pending));
+
+    final log = ReservationLog(
+      reservationId: updated.id,
+      approverId: approverId,
+      result: status,
+      timestamp: DateTime.now(),
+    );
+    _logs = [..._logs, log];
+    _logsCtrl.add(List.unmodifiable(_logs));
+  }
+
+  @override
+  Stream<List<ReservationLog>> watchLogs(String approverId) =>
+      _logsCtrl.stream;
+}
+
+// ============ WRAPPER (Stateful) สำหรับใช้ใน main.dart ============
 class Status extends StatefulWidget {
   const Status({super.key});
 
@@ -38,147 +154,187 @@ class Status extends StatefulWidget {
 }
 
 class _StatusState extends State<Status> {
-  late UserReservation _todayItem;
-
-  @override
-  void initState() {
-    super.initState();
-    _todayItem = UserReservation(           // <- เอา const ออก
-      roomCode: 'LR-104',
-      date: DateTime(2025, 9, 28),
-      start: const TimeOfDay(hour: 8, minute: 0),
-      end:   const TimeOfDay(hour: 10, minute: 0),
-      status: BookingStatus.pending,
-    );
-  }
-
-  // ตัวอย่างถ้าอยากเปลี่ยนสถานะในอนาคต
-  void _setStatus(BookingStatus s) {
-    setState(() {
-      _todayItem = UserReservation(
-        roomCode: _todayItem.roomCode,
-        date: _todayItem.date,
-        start: _todayItem.start,
-        end: _todayItem.end,
-        status: s,
-      );
-    });
-  }
-
+  // ถ้าต้องการ state เพิ่มเอง (เช่น รับพารามิเตอร์จาก login) ใส่ไว้ที่นี่ได้
   @override
   Widget build(BuildContext context) {
-    final item = _todayItem;
-
-    return Scaffold(
-      backgroundColor: AppColors.hampton,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
-        child: const _TopBar(userId: '6631501xxx'),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              // Title
-              Text(
-                'Status',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 44,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black.withOpacity(0.92),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Header row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  _HeaderText('Room'),
-                  _HeaderText('Action'),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // White card
-              _ReservationCardUser(item: item),
-
-              const Spacer(),
-
-              // Bottom bar
-              const Divider(thickness: 1),
-              const SizedBox(height: 4),
-              const _BottomBarUser(activeCenter: true),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
-      ),
-      // ตัวอย่าง FAB สำหรับสลับสถานะ (กดเล่นได้)
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final next = switch (_todayItem.status) {
-            BookingStatus.pending  => BookingStatus.approved,
-            BookingStatus.approved => BookingStatus.rejected,
-            BookingStatus.rejected => BookingStatus.pending,
-          };
-          _setStatus(next);
-        },
-        backgroundColor: AppColors.norway,
-        icon: const Icon(Icons.swap_horiz),
-        label: const Text('Toggle status'),
-      ),
+    return const ApproverStatusPage(
+      approverId: 'teacher-001',
+      approverName: 'Ajarn.Tick',
     );
   }
 }
 
-/// ===== TOP BAR =====
+// ============ PAGE ============
+class ApproverStatusPage extends StatefulWidget {
+  final String approverId, approverName;
+  const ApproverStatusPage({
+    super.key,
+    required this.approverId,
+    required this.approverName,
+  });
+
+  @override
+  State<ApproverStatusPage> createState() => _ApproverStatusPageState();
+}
+
+class _ApproverStatusPageState extends State<ApproverStatusPage> {
+  late final ReservationRepository repo;
+  int _seed = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    repo = MockReservationRepository();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.hampton,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(76),
+        child: _TopBar(approverName: widget.approverName),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addMockRequest,
+        backgroundColor: AppColors.norway,
+        label: const Text('Add mock request'),
+        icon: const Icon(Icons.add),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Text(
+                  'Status',
+                  style: TextStyle(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black.withOpacity(0.92),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  _HeaderText('User/Room'),
+                  _HeaderText('Action'),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: StreamBuilder<List<Reservation>>(
+                  stream: repo.watchPendingForApprover(widget.approverId),
+                  builder: (context, snap) {
+                    final items = snap.data ?? const <Reservation>[];
+                    if (items.isEmpty) {
+                      return const Center(child: Text('No pending requests'));
+                    }
+                    return ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      itemBuilder: (_, i) {
+                        final r = items[i];
+                        return ApproverReservationCard(
+                          data: r,
+                          onApprove: () => _setStatus(r, ReservationStatus.approved),
+                          onReject: ()  => _setStatus(r, ReservationStatus.rejected),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              const _BottomBar(active: BottomTab.check),
+              const SizedBox(height: 8),
+              const Divider(thickness: 1),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _setStatus(Reservation r, ReservationStatus s) async {
+    await repo.setStatus(
+      reservationId: r.id,
+      status: s,
+      approverId: widget.approverId,
+    );
+    if (!mounted) return;
+    final text = s == ReservationStatus.approved ? 'Approved' : 'Rejected';
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('${r.roomCode} • $text')));
+  }
+
+  Future<void> _addMockRequest() async {
+    final now = DateTime(2025, 9, 28);
+    final id = 'r${_seed++}';
+    final startH = 9 + (_seed % 6) * 2;
+    final r = Reservation(
+      id: id,
+      userId: '66315${_seed}xxx',
+      userName: _seed.isEven ? 'Eren Yeager' : 'Mikasa Ackerman',
+      roomCode: _seed.isEven ? 'LR-10$_seed' : 'MR-11$_seed',
+      date: now,
+      start: TimeOfDay(hour: startH, minute: 0),
+      end: TimeOfDay(hour: startH + 2, minute: 0),
+      status: ReservationStatus.pending,
+    );
+    await repo.addIncomingRequest(r);
+  }
+}
+
+// ============ WIDGETS ============
 class _TopBar extends StatelessWidget {
-  final String userId;
-  const _TopBar({required this.userId});
+  final String approverName;
+  const _TopBar({required this.approverName});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80,
       color: AppColors.finlandia,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SafeArea(
         bottom: false,
-        child: Row(
-          children: [
-            const CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.norway,
-              child: Text('🐦', style: TextStyle(fontSize: 22)),
-            ),
-            const SizedBox(width: 10),
-            const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ROOM',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: .5)),
-                Text('RESERVATION',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: .5)),
-              ],
-            ),
-            const Spacer(),
-            Text(userId, style: const TextStyle(color: Colors.white)),
-            const SizedBox(width: 10),
-            _LogoutPill(onPressed: () {
-              Navigator.of(context).maybePop();
-            }),
-          ],
+        child: SizedBox(
+          height: 72,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: AppColors.norway,
+                child: const Text('🐦', style: TextStyle(fontSize: 22)),
+              ),
+              const SizedBox(width: 10),
+              const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ROOM',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: .5)),
+                  Text('RESERVATION',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: .5)),
+                ],
+              ),
+              const Spacer(),
+              Text(approverName,
+                  style: const TextStyle(color: Colors.white, fontSize: 14)),
+              const SizedBox(width: 10),
+              _LogoutPill(onPressed: () {}),
+            ],
+          ),
         ),
       ),
     );
@@ -213,150 +369,182 @@ class _HeaderText extends StatelessWidget {
   const _HeaderText(this.text);
 
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w800,
-        color: Colors.black.withOpacity(0.9),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Text(
+        text,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w800,
+          color: Colors.black.withOpacity(0.9),
+        ),
+      );
 }
 
-/// ===== WHITE CARD (USER VIEW) =====
-class _ReservationCardUser extends StatelessWidget {
-  final UserReservation item;
-  const _ReservationCardUser({required this.item});
+class ApproverReservationCard extends StatelessWidget {
+  final Reservation data;
+  final VoidCallback onApprove, onReject;
+
+  const ApproverReservationCard({
+    super.key,
+    required this.data,
+    required this.onApprove,
+    required this.onReject,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = '${_dd(item.date)} ${_mon(item.date)} ${item.date.year}';
-    String hhmm(TimeOfDay t) =>
-        '${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${_two(data.date.day)} ${_month(data.date.month)} ${data.date.year}';
+    String t(TimeOfDay x) => '${x.hour}.${_two(x.minute)}';
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // พื้นในกล่องสีขาว
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.black.withOpacity(0.25), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 8))
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // LEFT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.roomCode,
+                Text('${data.userId}  ${data.userName}',
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black.withOpacity(0.95),
-                    )),
+                        fontSize: 14,
+                        color: Colors.black.withOpacity(0.75),
+                        fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
+                Text(data.roomCode,
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black.withOpacity(0.9))),
+                const SizedBox(height: 8),
                 Text(dateStr,
                     style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.black.withOpacity(0.45),
-                      fontWeight: FontWeight.w700,
-                    )),
-                const SizedBox(height: 6),
-                Text('${hhmm(item.start)}-${hhmm(item.end)}',
+                        fontSize: 18,
+                        color: Colors.black.withOpacity(0.45),
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text('${t(data.start)}-${t(data.end)}',
                     style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.black.withOpacity(0.50),
-                      fontWeight: FontWeight.w700,
-                    )),
+                        fontSize: 18,
+                        color: Colors.black.withOpacity(0.45),
+                        fontWeight: FontWeight.w700)),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-
-          // RIGHT: status chip
-          _StatusChip(status: item.status),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _ActionButton.primary(label: 'Approve', onTap: onApprove),
+              const SizedBox(height: 10),
+              _ActionButton.danger(label: 'Reject', onTap: onReject),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  String _dd(DateTime d) => d.day.toString().padLeft(2, '0');
-  String _mon(DateTime d) {
-    const m = ['', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return m[d.month];
+  String _two(int v) => v.toString().padLeft(2, '0');
+  String _month(int m) {
+    const names = [
+      '',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return names[m];
   }
 }
 
-/// ===== STATUS CHIP =====
-class _StatusChip extends StatelessWidget {
-  final BookingStatus status;
-  const _StatusChip({required this.status});
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final Color bg;
+  final Color textColor;
+
+  const _ActionButton._(
+      {required this.label,
+      required this.onTap,
+      required this.bg,
+      required this.textColor});
+
+  factory _ActionButton.primary(
+          {required String label, required VoidCallback onTap}) =>
+      _ActionButton._(
+        label: label,
+        onTap: onTap,
+        bg: AppColors.edward,
+        textColor: Colors.black87,
+      );
+
+  factory _ActionButton.danger(
+          {required String label, required VoidCallback onTap}) =>
+      _ActionButton._(
+        label: label,
+        onTap: onTap,
+        bg: AppColors.rejected,
+        textColor: Colors.black87,
+      );
 
   @override
-  Widget build(BuildContext context) {
-    late Color bg;
-    late String label;
-    switch (status) {
-      case BookingStatus.pending:
-        bg = AppColors.chipPending;
-        label = 'Pending';
-        break;
-      case BookingStatus.approved:
-        bg = AppColors.edward;
-        label = 'Approved';
-        break;
-      case BookingStatus.rejected:
-        bg = AppColors.chipRejected;
-        label = 'Rejected';
-        break;
-    }
-    return Container(
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Text(
-        label,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-      ),
-    );
-  }
-}
-
-/// ===== BOTTOM BAR (USER) =====
-class _BottomBarUser extends StatelessWidget {
-  final bool activeCenter;
-  const _BottomBarUser({required this.activeCenter});
-
-  @override
-  Widget build(BuildContext context) {
-    Widget _icon(IconData i, {bool highlight = false}) {
-      final ic = Icon(i, size: 34, color: Colors.black);
-      if (!highlight) return ic;
-      return Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFD1AC67),
+  Widget build(BuildContext context) => Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(label,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800, fontSize: 18)),
+          ),
         ),
-        padding: const EdgeInsets.all(6),
-        child: ic,
+      );
+}
+
+enum BottomTab { home, clock, check, grid }
+
+class _BottomBar extends StatelessWidget {
+  final BottomTab active;
+  const _BottomBar({required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget icon(IconData i, BottomTab t) {
+      final child =
+          Icon(i, size: 36, color: Colors.black.withOpacity(0.85));
+      return Container(
+        decoration: t == active
+            ? BoxDecoration(
+                color: const Color(0xFFD1AC67).withOpacity(0.8),
+                borderRadius: BorderRadius.circular(14),
+              )
+            : null,
+        padding: t == active ? const EdgeInsets.all(6) : EdgeInsets.zero,
+        child: InkResponse(onTap: () {}, radius: 28, child: child),
       );
     }
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _icon(Icons.home_outlined),
-        _icon(Icons.check_box_outlined, highlight: activeCenter),
-        _icon(Icons.schedule_outlined),
+        icon(Icons.home_outlined, BottomTab.home),
+        icon(Icons.schedule_outlined, BottomTab.clock),
+        icon(Icons.check_box_outlined, BottomTab.check),
+        icon(Icons.grid_view_rounded, BottomTab.grid),
       ],
     );
   }
