@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/room_data.dart'; 
+ 
 
 class BaseBrowseScreen extends StatelessWidget {
   final UserRole userRole;
@@ -70,38 +71,29 @@ class BaseBrowseScreen extends StatelessWidget {
 
   Widget _buildRoomCard(String title, String subtitle) {
     return Expanded(
-      child: ConstrainedBox( // 🛑 ใช้ ConstrainedBox เพื่อกำหนดความสูงขั้นต่ำ
-        constraints: const BoxConstraints(minHeight: 100), 
+      // 🚀 แก้ไข: ใช้ SizedBox กำหนดความสูงที่แน่นอน (85.0) เพื่อให้ Card มีขนาดเท่ากันและเล็กลง
+      child: SizedBox( 
+        height: 85.0, // 👈 กำหนดความสูงคงที่เพื่อให้ Card มีขนาดเท่ากัน
         child: Container(
-          padding: const EdgeInsets.all(12),
+          // 🚀 แก้ไข: ลด Padding ลงจาก 12 เป็น 8 เพื่อลดขนาดโดยรวม
+          padding: const EdgeInsets.all(8), 
           decoration: BoxDecoration(
             color: _cardColor,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // 🛑 จัดให้เนื้อหากระจายตามความสูง
+            // 🚀 แก้ไข: ใช้ MainAxisAlignment.start และเพิ่ม Spacer
+            mainAxisAlignment: MainAxisAlignment.start, 
             children: [
               Text(
                 title,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), // ลดขนาดฟอนต์เล็กน้อย
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subtitle,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildDot(Colors.white),
-                      _buildDot(Colors.white.withOpacity(0.5)),
-                      _buildDot(Colors.white.withOpacity(0.3)),
-                    ],
-                  ),
-                ],
+              const Spacer(), // ใช้ Spacer เพื่อดันข้อความด้านล่างลงไป
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.white70, fontSize: 10), // ลดขนาดฟอนต์เล็กน้อย
               ),
             ],
           ),
@@ -109,20 +101,6 @@ class BaseBrowseScreen extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildDot(Color color) {
-    return Container(
-      width: 6,
-      height: 6,
-      margin: const EdgeInsets.only(right: 4),
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
-  // 🛑 ลบ _buildFilterRow และ _buildFilterButton ออกไปทั้งหมด
 
   Widget _buildRoomListTable() {
     return Container(

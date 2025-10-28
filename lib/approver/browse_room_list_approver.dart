@@ -33,14 +33,11 @@ class HomeTabApprover extends StatelessWidget {
   final String userName;
   const HomeTabApprover({super.key, required this.userName});
 
-  // 🛑 ไม่จำเป็นต้องมี _buildActionButtons() หรือการส่งค่า actionButtons: null อีกต่อไป
-
   @override
   Widget build(BuildContext context) {
     return BaseBrowseScreen(
       userRole: UserRole.approver,
       userName: userName,
-      // 🛑 ลบ actionButtons: null, ออกไป
     );
   }
 }

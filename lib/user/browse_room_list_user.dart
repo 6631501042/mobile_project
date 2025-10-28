@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/room_data.dart'; // ต้อง import room_data
+import '../models/room_data.dart'; 
 import '../screens/base_browse_screen.dart'; // ต้อง import base_browse_screen
 
 // คลาสหลักสำหรับหน้า User Role
@@ -78,28 +78,12 @@ class _BrowseRoomListUserState extends State<BrowseRoomListUser> {
               ),
             ],
           ),
-          // ⚠️ ลบ PreferredSize ออก:
-          /*
-          bottom: const PreferredSize( 
-            preferredSize: Size.fromHeight(20.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.only(left: 16.0, bottom: 4.0),
-                child: Text(
-                  'Browse room list(User)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: Colors.white70),
-                ),
-              ),
-            ),
-          ),
-          */
         ),
 
         // --- TabBarView ---
         body: TabBarView(
           children: [
-            // 1. Home Tab: ใช้ BaseBrowseScreen พร้อมปุ่ม Reserve
+            // 1. Home Tab: ใช้ BaseBrowseScreen โดยไม่มีปุ่ม
             HomeTab(userName: userName), 
             // 2. History Tab:
             const HistoryTab(),
@@ -125,13 +109,14 @@ class _BrowseRoomListUserState extends State<BrowseRoomListUser> {
 }
 
 // ==========================
-// 1. Home Tab (Browse Room List + Reservation Button)
+// 1. Home Tab (Browse Room List)
 // ==========================
 class HomeTab extends StatelessWidget {
   final String userName;
   const HomeTab({super.key, required this.userName});
 
-  // ปุ่ม Reservation สำหรับ User
+  // 🛑 ลบ _buildReservationButton() ออกตามคำขอ
+  /*
   Widget _buildReservationButton() {
     const Color reserveColor = Color(0xFF4CAF50); // เขียว
     
@@ -152,6 +137,7 @@ class HomeTab extends StatelessWidget {
       ),
     );
   }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +145,7 @@ class HomeTab extends StatelessWidget {
     return BaseBrowseScreen(
       userRole: UserRole.user,
       userName: userName,
-      actionButtons: _buildReservationButton(),
+      // 🛑 ลบ actionButtons: _buildReservationButton() ออกไป (ตอนนี้ actionButtons เป็น null โดยปริยาย)
     );
   }
 }

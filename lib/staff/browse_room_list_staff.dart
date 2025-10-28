@@ -77,7 +77,6 @@ class _BrowseRoomListStaffState extends State<BrowseRoomListStaff> {
               ),
             ],
           ),
-          // ⚠️ ไม่มี PreferredSize ด้านล่าง (แก้ไขตามที่คุณต้องการ)
         ),
 
         // --- TabBarView ---
