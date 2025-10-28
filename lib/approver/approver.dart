@@ -127,7 +127,7 @@ class AppColors {
   static const hampton = Color(0xFFE6D5A9); // Page background
   static const norway = Color(0xFFAFBEA2); // Logo circle bg
   static const edward = Color(0xFF9CB4AC); // Approved chip
-  static const chipPending = Color(0xFFFFF96F); // Pending chip
+  static const chipPending = Color(0xFFFDFD96); // Pending chip // 0xFFFBFB3C
   static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
 }
 
@@ -251,7 +251,7 @@ class _ReservationCardUser extends StatelessWidget {
                 Text(
                   dateStr,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     color: Colors.black,
                     fontWeight: FontWeight.w400,
                   ),
@@ -260,7 +260,7 @@ class _ReservationCardUser extends StatelessWidget {
                 Text(
                   '${hhmm(item.start)}-${hhmm(item.end)}',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     color: Colors.black,
                     fontWeight: FontWeight.w400,
                   ),
@@ -306,10 +306,12 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     late Color bg;
+    late Color border;
     late String label;
     switch (status) {
       case BookingStatus.pending:
         bg = AppColors.chipPending;
+        border = Color(0xFFA08A0D);
         label = 'Pending';
         break;
       case BookingStatus.approved:
@@ -324,12 +326,17 @@ class _StatusChip extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border, width: 1.5),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Text(
         label,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          color: Color(0xFFA08A0D),
+        ),
       ),
     );
   }
@@ -353,7 +360,7 @@ class _HistoryTabState extends State<HistoryTab> {
         reqIdAndUser: "6E3510/xxx Leo Jane",
         roomCode: "LR-105",
         date: "28 Sep 2025",
-        time: "8.00-10.00",
+        time: "08.00-10.00",
         status: "Approved",
         approverName: "Ajarn.Tick",
       ),

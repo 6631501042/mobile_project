@@ -131,7 +131,7 @@ class _HistoryTabState extends State<HistoryTab> {
         reqIdAndUser: "6E3510/xxx Leo Jane",
         roomCode: "LR-105",
         date: "28 Sep 2025",
-        time: "8.00-10.00",
+        time: "08.00-10.00",
         status: "Approved",
         approverName: "Ajarn.Tick",
       ),

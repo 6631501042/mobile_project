@@ -11,9 +11,9 @@ class _UserState extends State<User> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
-        backgroundColor: const Color(0xFFD8C38A),
+        backgroundColor: const Color(0xFFE6D5A9),
         // appbar
         appBar: AppBar(
           backgroundColor: const Color(0xFF476C5E),
@@ -73,6 +73,8 @@ class _UserState extends State<User> {
           children: [
             // home
             HomeTab(),
+            // status
+            StatusTab(),
             // history
             HistoryTab(),
             // dashboard
@@ -87,6 +89,7 @@ class _UserState extends State<User> {
             unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Home'),
+              Tab(icon: Icon(Icons.star), text: 'Status'),
               Tab(icon: Icon(Icons.schedule), text: 'History'),
               Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
             ],
@@ -115,9 +118,233 @@ class HomeTab extends StatelessWidget {
 }
 
 // ==========================
-// history
+// status
 // ==========================
 
+/// ===== THEME COLORS =====
+class AppColors {
+  static const finlandia = Color(0xFF51624F); // Top bar
+  static const hampton = Color(0xFFE6D5A9); // Page background
+  static const norway = Color(0xFFAFBEA2); // Logo circle bg
+  static const edward = Color(0xFF9CB4AC); // Approved chip
+  static const chipPending = Color(0xFFFDFD96); // Pending chip // 0xFFFBFB3C
+  static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
+}
+
+/// ===== MODEL =====
+enum BookingStatus { pending, approved, rejected }
+
+class UserReservation {
+  final String roomCode;
+  final DateTime date;
+  final TimeOfDay start;
+  final TimeOfDay end;
+  final BookingStatus status;
+
+  const UserReservation({
+    required this.roomCode,
+    required this.date,
+    required this.start,
+    required this.end,
+    required this.status,
+  });
+}
+
+/// ===== PAGE (USER) — Stateful =====
+class StatusTab extends StatefulWidget {
+  const StatusTab({super.key});
+
+  @override
+  State<StatusTab> createState() => _StatusTabState();
+}
+
+class _StatusTabState extends State<StatusTab> {
+  late UserReservation _todayItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _todayItem = UserReservation(
+      // <- เอา const ออก
+      roomCode: 'LR-104',
+      date: DateTime(2025, 9, 28),
+      start: const TimeOfDay(hour: 8, minute: 0),
+      end: const TimeOfDay(hour: 10, minute: 0),
+      status: BookingStatus.pending,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = _todayItem;
+
+    return Scaffold(
+      backgroundColor: AppColors.hampton,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              // Title
+              Text(
+                'Status',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black.withOpacity(0.92),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // White card
+              _ReservationCardUser(item: item),
+
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ===== WHITE CARD (USER VIEW) =====
+class _ReservationCardUser extends StatelessWidget {
+  final UserReservation item;
+  const _ReservationCardUser({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = '${_dd(item.date)} ${_mon(item.date)} ${item.date.year}';
+    String hhmm(TimeOfDay t) =>
+        '${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF2EDD9),
+        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // LEFT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.roomCode,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  dateStr,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${hhmm(item.start)}-${hhmm(item.end)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // RIGHT: status chip
+          _StatusChip(status: item.status),
+        ],
+      ),
+    );
+  }
+
+  String _dd(DateTime d) => d.day.toString().padLeft(2, '0');
+  String _mon(DateTime d) {
+    const m = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return m[d.month];
+  }
+}
+
+/// ===== STATUS CHIP =====
+class _StatusChip extends StatelessWidget {
+  final BookingStatus status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    late Color bg;
+    late Color border;
+    late String label;
+    switch (status) {
+      case BookingStatus.pending:
+        bg = AppColors.chipPending;
+        border = Color(0xFFA08A0D);
+        label = 'Pending';
+        break;
+      case BookingStatus.approved:
+        bg = AppColors.edward;
+        label = 'Approved';
+        break;
+      case BookingStatus.rejected:
+        bg = AppColors.chipRejected;
+        label = 'Rejected';
+        break;
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border, width: 1.5),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          color: Color(0xFFA08A0D),
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================
+// history
+// ==========================
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
 
@@ -132,7 +359,7 @@ class _HistoryTabState extends State<HistoryTab> {
         reqIdAndUser: "6E3510/xxx Leo Jane",
         roomCode: "LR-105",
         date: "28 Sep 2025",
-        time: "8.00-10.00",
+        time: "08.00-10.00",
         status: "Approved",
         approverName: "Ajarn.Tick",
       ),
