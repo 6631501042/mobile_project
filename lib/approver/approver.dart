@@ -13,7 +13,7 @@ class _ApproverState extends State<Approver> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: const Color(0xFFD8C38A),
+        backgroundColor: const Color(0xFFE6D5A9),
         // appbar
         appBar: AppBar(
           backgroundColor: const Color(0xFF476C5E),
@@ -120,15 +120,216 @@ class HomeTab extends StatelessWidget {
 // ==========================
 // status
 // ==========================
-class StatusTab extends StatelessWidget {
+
+/// ===== THEME COLORS =====
+class AppColors {
+  static const finlandia = Color(0xFF51624F); // Top bar
+  static const hampton = Color(0xFFE6D5A9); // Page background
+  static const norway = Color(0xFFAFBEA2); // Logo circle bg
+  static const edward = Color(0xFF9CB4AC); // Approved chip
+  static const chipPending = Color(0xFFFFF96F); // Pending chip
+  static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
+}
+
+/// ===== MODEL =====
+enum BookingStatus { pending, approved, rejected }
+
+class UserReservation {
+  final String roomCode;
+  final DateTime date;
+  final TimeOfDay start;
+  final TimeOfDay end;
+  final BookingStatus status;
+
+  const UserReservation({
+    required this.roomCode,
+    required this.date,
+    required this.start,
+    required this.end,
+    required this.status,
+  });
+}
+
+/// ===== PAGE (USER) — Stateful =====
+class StatusTab extends StatefulWidget {
   const StatusTab({super.key});
 
   @override
+  State<StatusTab> createState() => _StatusTabState();
+}
+
+class _StatusTabState extends State<StatusTab> {
+  late UserReservation _todayItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _todayItem = UserReservation(
+      // <- เอา const ออก
+      roomCode: 'LR-104',
+      date: DateTime(2025, 9, 28),
+      start: const TimeOfDay(hour: 8, minute: 0),
+      end: const TimeOfDay(hour: 10, minute: 0),
+      status: BookingStatus.pending,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
+    final item = _todayItem;
+
+    return Scaffold(
+      backgroundColor: AppColors.hampton,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              // Title
+              Text(
+                'Status',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black.withOpacity(0.92),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // White card
+              _ReservationCardUser(item: item),
+
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ===== WHITE CARD (USER VIEW) =====
+class _ReservationCardUser extends StatelessWidget {
+  final UserReservation item;
+  const _ReservationCardUser({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = '${_dd(item.date)} ${_mon(item.date)} ${item.date.year}';
+    String hhmm(TimeOfDay t) =>
+        '${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF2EDD9),
+        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // LEFT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.roomCode,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  dateStr,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${hhmm(item.start)}-${hhmm(item.end)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // RIGHT: status chip
+          _StatusChip(status: item.status),
+        ],
+      ),
+    );
+  }
+
+  String _dd(DateTime d) => d.day.toString().padLeft(2, '0');
+  String _mon(DateTime d) {
+    const m = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return m[d.month];
+  }
+}
+
+/// ===== STATUS CHIP =====
+class _StatusChip extends StatelessWidget {
+  final BookingStatus status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    late Color bg;
+    late String label;
+    switch (status) {
+      case BookingStatus.pending:
+        bg = AppColors.chipPending;
+        label = 'Pending';
+        break;
+      case BookingStatus.approved:
+        bg = AppColors.edward;
+        label = 'Approved';
+        break;
+      case BookingStatus.rejected:
+        bg = AppColors.chipRejected;
+        label = 'Rejected';
+        break;
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Text(
-        'Welcome to Status',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
       ),
     );
   }
@@ -245,7 +446,11 @@ class _HistoryTabState extends State<HistoryTab> {
                 // list section
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 8,
+                    ),
                     itemCount: dataList.length,
                     itemBuilder: (context, index) {
                       final item = dataList[index];
@@ -296,16 +501,24 @@ class HistoryCardApprover extends StatelessWidget {
     final bool isApproved = item.status.toLowerCase() == "approved";
     final bool isRejected = item.status.toLowerCase() == "rejected";
 
-    final Color pillBg = isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
-    final Color pillBorder = isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
-    final Color pillText = isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
+    final Color pillBg = isApproved
+        ? const Color(0xFFE4E9EE)
+        : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved
+        ? const Color(0xFF6D7A86)
+        : const Color(0xFFB52125);
+    final Color pillText = isApproved
+        ? const Color(0xFF2D3A43)
+        : const Color(0xFFB52125);
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF2EDD9),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFF8E8A76), width: 1),
-        boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3)],
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
+        ],
       ),
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -330,7 +543,10 @@ class HistoryCardApprover extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(4),
@@ -338,13 +554,26 @@ class HistoryCardApprover extends StatelessWidget {
                     ),
                     child: Text(
                       item.status,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pillText),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: pillText,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text("By", style: TextStyle(fontSize: 14, color: Colors.black)),
-                  Text(item.approverName,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
+                  const Text(
+                    "By",
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                  Text(
+                    item.approverName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -354,7 +583,11 @@ class HistoryCardApprover extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               "Reason for Rejection:",
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB52125)),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFB52125),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.only(top: 2),
