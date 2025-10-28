@@ -1,7 +1,6 @@
-// lib/user/status.dart
 import 'package:flutter/material.dart';
 
-/// ====== THEME COLORS ======
+/// ===== THEME COLORS =====
 class AppColors {
   static const finlandia = Color(0xFF51624F); // Top bar
   static const hampton   = Color(0xFFE6D5A9); // Page background
@@ -11,7 +10,7 @@ class AppColors {
   static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
 }
 
-/// ====== MODEL ======
+/// ===== MODEL =====
 enum BookingStatus { pending, approved, rejected }
 
 class UserReservation {
@@ -30,19 +29,41 @@ class UserReservation {
   });
 }
 
-/// ====== PAGE (USER) ======
-class Status extends StatelessWidget {
+/// ===== PAGE (USER) — Stateful =====
+class Status extends StatefulWidget {
   const Status({super.key});
 
-  // mock 1 รายการประจำวัน (คุณจะต่อ DB ภายหลังได้เลย)
-  // ก่อน:  const UserReservation( ... )
-UserReservation get _todayItem => UserReservation(
-  roomCode: 'LR-104',
-  date: DateTime(2025, 9, 28),
-  start: const TimeOfDay(hour: 8, minute: 0),
-  end:   const TimeOfDay(hour: 10, minute: 0),
-  status: BookingStatus.pending,
-);
+  @override
+  State<Status> createState() => _StatusState();
+}
+
+class _StatusState extends State<Status> {
+  late UserReservation _todayItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _todayItem = UserReservation(           // <- เอา const ออก
+      roomCode: 'LR-104',
+      date: DateTime(2025, 9, 28),
+      start: const TimeOfDay(hour: 8, minute: 0),
+      end:   const TimeOfDay(hour: 10, minute: 0),
+      status: BookingStatus.pending,
+    );
+  }
+
+  // ตัวอย่างถ้าอยากเปลี่ยนสถานะในอนาคต
+  void _setStatus(BookingStatus s) {
+    setState(() {
+      _todayItem = UserReservation(
+        roomCode: _todayItem.roomCode,
+        date: _todayItem.date,
+        start: _todayItem.start,
+        end: _todayItem.end,
+        status: s,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +73,7 @@ UserReservation get _todayItem => UserReservation(
       backgroundColor: AppColors.hampton,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
-        child: _TopBar(userId: '6631501xxx'),
+        child: const _TopBar(userId: '6631501xxx'),
       ),
       body: SafeArea(
         child: Padding(
@@ -75,7 +96,7 @@ UserReservation get _todayItem => UserReservation(
               // Header row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                children: const [
                   _HeaderText('Room'),
                   _HeaderText('Action'),
                 ],
@@ -96,11 +117,25 @@ UserReservation get _todayItem => UserReservation(
           ),
         ),
       ),
+      // ตัวอย่าง FAB สำหรับสลับสถานะ (กดเล่นได้)
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          final next = switch (_todayItem.status) {
+            BookingStatus.pending  => BookingStatus.approved,
+            BookingStatus.approved => BookingStatus.rejected,
+            BookingStatus.rejected => BookingStatus.pending,
+          };
+          _setStatus(next);
+        },
+        backgroundColor: AppColors.norway,
+        icon: const Icon(Icons.swap_horiz),
+        label: const Text('Toggle status'),
+      ),
     );
   }
 }
 
-/// ====== TOP BAR ======
+/// ===== TOP BAR =====
 class _TopBar extends StatelessWidget {
   final String userId;
   const _TopBar({required this.userId});
@@ -141,7 +176,6 @@ class _TopBar extends StatelessWidget {
             Text(userId, style: const TextStyle(color: Colors.white)),
             const SizedBox(width: 10),
             _LogoutPill(onPressed: () {
-              // TODO: hook logout
               Navigator.of(context).maybePop();
             }),
           ],
@@ -191,7 +225,7 @@ class _HeaderText extends StatelessWidget {
   }
 }
 
-/// ====== WHITE CARD (USER VIEW) ======
+/// ===== WHITE CARD (USER VIEW) =====
 class _ReservationCardUser extends StatelessWidget {
   final UserReservation item;
   const _ReservationCardUser({required this.item});
@@ -204,7 +238,7 @@ class _ReservationCardUser extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,                        // ✅ พื้นในกล่อง "สีขาว"
+        color: Colors.white, // พื้นในกล่องสีขาว
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.black.withOpacity(0.25), width: 1.2),
         boxShadow: [
@@ -263,7 +297,7 @@ class _ReservationCardUser extends StatelessWidget {
   }
 }
 
-/// ====== STATUS CHIP ======
+/// ===== STATUS CHIP =====
 class _StatusChip extends StatelessWidget {
   final BookingStatus status;
   const _StatusChip({required this.status});
@@ -297,7 +331,7 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-/// ====== BOTTOM BAR (USER) ======
+/// ===== BOTTOM BAR (USER) =====
 class _BottomBarUser extends StatelessWidget {
   final bool activeCenter;
   const _BottomBarUser({required this.activeCenter});
