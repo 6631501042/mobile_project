@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import '../models/room_data.dart'; // แก้ไข Path แล้ว
+import '../models/room_data.dart'; 
 
 class BaseBrowseScreen extends StatelessWidget {
   final UserRole userRole;
   final String userName;
   final Widget? actionButtons; // ปุ่ม Add/Edit / Reserve / Approve-Reject
-  // final Widget? bottomNavBar; // ไม่จำเป็นต้องใช้ เพราะ Scaffold หลักจัดการแล้ว
 
   const BaseBrowseScreen({
     super.key,
     required this.userRole,
     required this.userName,
     this.actionButtons,
-    // this.bottomNavBar, // ลบออกจาก constructor
   });
 
   // ข้อมูลจำลอง (Mock Data)
@@ -27,30 +25,23 @@ class BaseBrowseScreen extends StatelessWidget {
   ];
   
   // กำหนดสี
-  // ⚠️ หมายเหตุ: สีเหล่านี้ควรถูกกำหนดในไฟล์หลัก (Approver, Staff) เพื่อความเป็นระเบียบ
-  // แต่ถูกเก็บไว้ที่นี่ชั่วคราวเพื่อรันโค้ด
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ BaseBrowseScreen ควร return แค่เนื้อหา (Content)
-    // ลบ Scaffold, AppBar และ SafeArea ออก
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ⚠️ ลบ _buildHeader(appBarTitle) ที่มี Logo/Logout ซ้ำซ้อนออก
-
         const Padding(
           padding: EdgeInsets.only(top: 8.0, bottom: 8.0, left: 16.0),
           child: Text(
-            'Browse room list', // ใช้หัวข้อหลักนี้แทน
+            'Browse room list',
             style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
           ),
         ),
         _buildRoomTypeCards(),
-        _buildFilterRow(),
+        // 🛑 ลบ _buildFilterRow() ออกตามความต้องการ
         Expanded(
           child: _buildRoomListTable(),
         ),
@@ -59,7 +50,7 @@ class BaseBrowseScreen extends StatelessWidget {
     );
   }
 
-  // ⚠️ ลบ _buildHeader ออก
+  // --- Widgets ย่อยที่ใช้ร่วมกัน ---
 
   Widget _buildRoomTypeCards() {
     return Padding(
@@ -79,33 +70,41 @@ class BaseBrowseScreen extends StatelessWidget {
 
   Widget _buildRoomCard(String title, String subtitle) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: _cardColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildDot(Colors.white),
-                _buildDot(Colors.white.withOpacity(0.5)),
-                _buildDot(Colors.white.withOpacity(0.3)),
-              ],
-            ),
-          ],
+      child: ConstrainedBox( // 🛑 ใช้ ConstrainedBox เพื่อกำหนดความสูงขั้นต่ำ
+        constraints: const BoxConstraints(minHeight: 100), 
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _cardColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, // 🛑 จัดให้เนื้อหากระจายตามความสูง
+            children: [
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildDot(Colors.white),
+                      _buildDot(Colors.white.withOpacity(0.5)),
+                      _buildDot(Colors.white.withOpacity(0.3)),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -123,46 +122,12 @@ class BaseBrowseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildFilterButton('Room Type'),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _buildFilterButton('Status'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterButton(String title) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _tableHeaderColor.withOpacity(0.7),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(color: Colors.black, fontSize: 14),
-          ),
-          const Icon(Icons.keyboard_arrow_down, color: Colors.black, size: 20),
-        ],
-      ),
-    );
-  }
+  // 🛑 ลบ _buildFilterRow และ _buildFilterButton ออกไปทั้งหมด
 
   Widget _buildRoomListTable() {
     return Container(
-      margin: const EdgeInsets.all(16.0),
+      // 🛑 ปรับ Margin ด้านบนจาก all(16.0) เป็น fromLTRB(16.0, 8.0, 16.0, 16.0) เพื่อให้ List Table เลื่อนขึ้น
+      margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0), 
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -191,7 +156,7 @@ class BaseBrowseScreen extends StatelessWidget {
               children: [
                 Expanded(flex: 1, child: Text('No.', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
                 Expanded(flex: 2, child: Text('Room', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                Expanded(flex: 3, child: Text('Time slots', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(flex: 2, child: Text('Time slots', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))), // Flex 2 เพื่อแก้ปัญหาล้นจอ
                 Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
               ],
             ),
@@ -219,7 +184,7 @@ class BaseBrowseScreen extends StatelessWidget {
         children: [
           Expanded(flex: 1, child: Text('${slot.no}')),
           Expanded(flex: 2, child: Text(slot.room)),
-          Expanded(flex: 3, child: Text(slot.timeSlots)),
+          Expanded(flex: 2, child: Text(slot.timeSlots)), // Flex 2 ให้ตรงกับ Header
           Expanded(
             flex: 2,
             child: Align(
