@@ -1,20 +1,27 @@
 // ---------------------------------------------
-// lib/user/test.dart  (Approver page, ไม่มี main())
+// Approver Status page (ปุ่ม Approve/Reject ตามภาพ + popup เหตุผล)
 // ---------------------------------------------
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-// ============ THEME ============
+/// ============ THEME ============
 class AppColors {
   static const finlandia = Color(0xFF51624F); // Top bar
   static const hampton   = Color(0xFFE6D5A9); // Background
   static const norway    = Color(0xFFAFBEA2);
-  static const edward    = Color(0xFF9CB4AC); // Approve button
-  static const rejected  = Color(0xFFFF9E9E); // Reject button
   static const cardBg    = Color(0xFFF9F5E5);
+
+  // ปุ่มตามภาพ (ฟ้ากับชมพู + เส้นขอบ)
+  static const approveBg     = Color(0xFFD9EBFF); // ฟ้าอ่อนปุ่ม Approve
+  static const approveBorder = Color(0xFF9BC3F8); // เส้นขอบฟ้า
+  static const approveText   = Color(0xFF245B96); // ตัวหนังสือฟ้าเข้มเล็กน้อย
+
+  static const rejectBg      = Color(0xFFFFD4D4); // ชมพูอ่อนปุ่ม Reject
+  static const rejectBorder  = Color(0xFFE89999); // เส้นขอบชมพู
+  static const rejectText    = Color(0xFF7F1F1F); // ตัวหนังสือแดงอมเลือดนิดๆ
 }
 
-// ============ MODELS ============
+/// ============ MODELS ============
 enum ReservationStatus { pending, approved, rejected }
 
 class Reservation {
@@ -38,21 +45,22 @@ class Reservation {
   });
 
   Reservation copyWith({ReservationStatus? status}) => Reservation(
-        id: id,
-        userId: userId,
-        userName: userName,
-        roomCode: roomCode,
-        date: date,
-        start: start,
-        end: end,
-        status: status ?? this.status,
-      );
+    id: id,
+    userId: userId,
+    userName: userName,
+    roomCode: roomCode,
+    date: date,
+    start: start,
+    end: end,
+    status: status ?? this.status,
+  );
 }
 
 class ReservationLog {
   final String reservationId;
   final String approverId;
   final ReservationStatus result;
+  final String? reason;
   final DateTime timestamp;
 
   const ReservationLog({
@@ -60,10 +68,11 @@ class ReservationLog {
     required this.approverId,
     required this.result,
     required this.timestamp,
+    this.reason,
   });
 }
 
-// ============ REPOSITORY ============
+/// ============ REPOSITORY ============
 abstract class ReservationRepository {
   Stream<List<Reservation>> watchPendingForApprover(String approverId);
   Future<void> addIncomingRequest(Reservation r);
@@ -71,6 +80,7 @@ abstract class ReservationRepository {
     required String reservationId,
     required ReservationStatus status,
     required String approverId,
+    String? reason,
   });
   Stream<List<ReservationLog>> watchLogs(String approverId);
 }
@@ -123,6 +133,7 @@ class MockReservationRepository implements ReservationRepository {
     required String reservationId,
     required ReservationStatus status,
     required String approverId,
+    String? reason,
   }) async {
     final idx = _pending.indexWhere((e) => e.id == reservationId);
     if (idx == -1) return;
@@ -135,6 +146,7 @@ class MockReservationRepository implements ReservationRepository {
       approverId: approverId,
       result: status,
       timestamp: DateTime.now(),
+      reason: reason,
     );
     _logs = [..._logs, log];
     _logsCtrl.add(List.unmodifiable(_logs));
@@ -145,16 +157,9 @@ class MockReservationRepository implements ReservationRepository {
       _logsCtrl.stream;
 }
 
-// ============ WRAPPER (Stateful) สำหรับใช้ใน main.dart ============
-class Status extends StatefulWidget {
+/// ============ Wrapper (ใช้ใน main.dart) ============
+class Status extends StatelessWidget {
   const Status({super.key});
-
-  @override
-  State<Status> createState() => _StatusState();
-}
-
-class _StatusState extends State<Status> {
-  // ถ้าต้องการ state เพิ่มเอง (เช่น รับพารามิเตอร์จาก login) ใส่ไว้ที่นี่ได้
   @override
   Widget build(BuildContext context) {
     return const ApproverStatusPage(
@@ -164,7 +169,7 @@ class _StatusState extends State<Status> {
   }
 }
 
-// ============ PAGE ============
+/// ============ PAGE ============
 class ApproverStatusPage extends StatefulWidget {
   final String approverId, approverName;
   const ApproverStatusPage({
@@ -241,8 +246,29 @@ class _ApproverStatusPageState extends State<ApproverStatusPage> {
                         final r = items[i];
                         return ApproverReservationCard(
                           data: r,
-                          onApprove: () => _setStatus(r, ReservationStatus.approved),
-                          onReject: ()  => _setStatus(r, ReservationStatus.rejected),
+                          onApprove: () async {
+                            await repo.setStatus(
+                              reservationId: r.id,
+                              status: ReservationStatus.approved,
+                              approverId: widget.approverId,
+                            );
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${r.roomCode} • Approved')),
+                            );
+                          },
+                          onReject: (reason) async {
+                            await repo.setStatus(
+                              reservationId: r.id,
+                              status: ReservationStatus.rejected,
+                              approverId: widget.approverId,
+                              reason: reason,
+                            );
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${r.roomCode} • Rejected\nReason: $reason')),
+                            );
+                          },
                         );
                       },
                     );
@@ -258,18 +284,6 @@ class _ApproverStatusPageState extends State<ApproverStatusPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _setStatus(Reservation r, ReservationStatus s) async {
-    await repo.setStatus(
-      reservationId: r.id,
-      status: s,
-      approverId: widget.approverId,
-    );
-    if (!mounted) return;
-    final text = s == ReservationStatus.approved ? 'Approved' : 'Rejected';
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('${r.roomCode} • $text')));
   }
 
   Future<void> _addMockRequest() async {
@@ -290,7 +304,42 @@ class _ApproverStatusPageState extends State<ApproverStatusPage> {
   }
 }
 
-// ============ WIDGETS ============
+/// ===== ป๊อปอัปขอเหตุผล Reject
+Future<String?> _promptRejectReason(BuildContext context) async {
+  return showDialog<String>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogCtx) {
+      final controller = TextEditingController();
+      return AlertDialog(
+        title: const Text('Reason for rejection'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 2,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(
+            hintText: 'Type reason…',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: (v) => Navigator.of(dialogCtx).pop(v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(null),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(controller.text.trim()),
+            child: const Text('Reject'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+/// ============ WIDGETS ============
 class _TopBar extends StatelessWidget {
   final String approverName;
   const _TopBar({required this.approverName});
@@ -370,18 +419,19 @@ class _HeaderText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w800,
-          color: Colors.black.withOpacity(0.9),
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.w800,
+      color: Colors.black.withOpacity(0.9),
+    ),
+  );
 }
 
 class ApproverReservationCard extends StatelessWidget {
   final Reservation data;
-  final VoidCallback onApprove, onReject;
+  final Future<void> Function() onApprove;
+  final Future<void> Function(String reason) onReject;
 
   const ApproverReservationCard({
     super.key,
@@ -412,6 +462,7 @@ class ApproverReservationCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Left
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,12 +494,23 @@ class ApproverReservationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
+          // Right
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _ActionButton.primary(label: 'Approve', onTap: onApprove),
+              _PillButton.approve(
+                label: 'Approve',
+                onTap: onApprove,
+              ),
               const SizedBox(height: 10),
-              _ActionButton.danger(label: 'Reject', onTap: onReject),
+              _PillButton.reject(
+                label: 'Reject',
+                onTap: () async {
+                  final reason = await _promptRejectReason(context);
+                  if (reason == null || reason.isEmpty) return;
+                  await onReject(reason);
+                },
+              ),
             ],
           ),
         ],
@@ -459,60 +521,74 @@ class ApproverReservationCard extends StatelessWidget {
   String _two(int v) => v.toString().padLeft(2, '0');
   String _month(int m) {
     const names = [
-      '',
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '', 'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec'
     ];
     return names[m];
   }
 }
 
-class _ActionButton extends StatelessWidget {
+/// ปุ่มเม็ดยาให้เหมือนภาพ: พื้นสีอ่อน + เส้นขอบ + ขอบมน
+class _PillButton extends StatelessWidget {
   final String label;
-  final VoidCallback onTap;
+  final Future<void> Function() onTap;
   final Color bg;
-  final Color textColor;
+  final Color border;
+  final Color text;
 
-  const _ActionButton._(
-      {required this.label,
-      required this.onTap,
-      required this.bg,
-      required this.textColor});
+  const _PillButton._({
+    required this.label,
+    required this.onTap,
+    required this.bg,
+    required this.border,
+    required this.text,
+  });
 
-  factory _ActionButton.primary(
-          {required String label, required VoidCallback onTap}) =>
-      _ActionButton._(
-        label: label,
-        onTap: onTap,
-        bg: AppColors.edward,
-        textColor: Colors.black87,
-      );
+  factory _PillButton.approve({
+    required String label,
+    required Future<void> Function() onTap,
+  }) => _PillButton._(
+    label: label,
+    onTap: onTap,
+    bg: AppColors.approveBg,
+    border: AppColors.approveBorder,
+    text: AppColors.approveText,
+  );
 
-  factory _ActionButton.danger(
-          {required String label, required VoidCallback onTap}) =>
-      _ActionButton._(
-        label: label,
-        onTap: onTap,
-        bg: AppColors.rejected,
-        textColor: Colors.black87,
-      );
+  factory _PillButton.reject({
+    required String label,
+    required Future<void> Function() onTap,
+  }) => _PillButton._(
+    label: label,
+    onTap: onTap,
+    bg: AppColors.rejectBg,
+    border: AppColors.rejectBorder,
+    text: AppColors.rejectText,
+  );
 
   @override
   Widget build(BuildContext context) => Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Text(label,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 18)),
+    color: bg,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+      side: BorderSide(color: border, width: 1.4),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () async => await onTap(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: text,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 enum BottomTab { home, clock, check, grid }
@@ -524,8 +600,7 @@ class _BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget icon(IconData i, BottomTab t) {
-      final child =
-          Icon(i, size: 36, color: Colors.black.withOpacity(0.85));
+      final child = Icon(i, size: 36, color: Colors.black.withOpacity(0.85));
       return Container(
         decoration: t == active
             ? BoxDecoration(
