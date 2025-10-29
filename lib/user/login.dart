@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_project/user/user.dart';
+import 'package:mobile_project/user/register.dart';
 
 class Login extends StatelessWidget {
   const Login({super.key});
@@ -7,7 +9,7 @@ class Login extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextEditingController username = TextEditingController();
     final TextEditingController password = TextEditingController();
-    
+
     return Scaffold(
       backgroundColor: Color(0xFFD8C38A),
       body: Center(
@@ -75,7 +77,12 @@ class Login extends StatelessWidget {
                       side: BorderSide(color: Color(0xFF4E5B4C)),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const User()),
+                    );
+                  },
                   child: Text('Login', style: TextStyle(color: Colors.white)),
                 ),
               ),
@@ -99,7 +106,12 @@ class Login extends StatelessWidget {
                         vertical: 8,
                       ),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Register()),
+                      );
+                    },
                     child: Text('Create new'),
                   ),
                 ],

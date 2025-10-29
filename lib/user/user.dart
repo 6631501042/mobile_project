@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_project/user/login.dart';
-import '../modelsData/room_data.dart'; // Import necessary for UserRole enum
-import '../screensOfBrowseRoomList/base_browse_screen.dart'; // Import BaseBrowseScreen
-import 'package:mobile_project/staff/add_edit_form.dart'; //for staff
+import '../modelsData/room_data.dart';
+import '../screensOfBrowseRoomList/base_browse_screen.dart'; // ต้อง import base_browse_screen
+import 'package:mobile_project/user/request_form.dart'; //มันคือ request form ของ user
 
-class Staff extends StatefulWidget {
-  const Staff({super.key});
+class User extends StatefulWidget {
+  const User({super.key});
 
   @override
-  State<Staff> createState() => _StaffState();
+  State<User> createState() => _UserState();
 }
 
-class _StaffState extends State<Staff> {
-  final String userName = 'Staff001';
+class _UserState extends State<User> {
+  final String userName = '6631501xxx';
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
-        backgroundColor: const Color(0xFFD8C38A),
+        backgroundColor: const Color(0xFFE6D5A9),
         // appbar
         appBar: AppBar(
           backgroundColor: const Color(0xFF476C5E),
@@ -40,7 +40,7 @@ class _StaffState extends State<Staff> {
                   ),
                 ],
               ),
-              // staff name / logout button
+              // user name / logout button
               Row(
                 children: [
                   Text(
@@ -83,6 +83,8 @@ class _StaffState extends State<Staff> {
           children: [
             // home
             HomeTab(userName: userName),
+            // status
+            StatusTab(),
             // history
             HistoryTab(),
             // dashboard
@@ -97,6 +99,7 @@ class _StaffState extends State<Staff> {
             unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Home'),
+              Tab(icon: Icon(Icons.star), text: 'Status'),
               Tab(icon: Icon(Icons.schedule), text: 'History'),
               Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
             ],
@@ -113,126 +116,268 @@ class _StaffState extends State<Staff> {
 class HomeTab extends StatefulWidget {
   final String userName;
   const HomeTab({super.key, required this.userName});
+
   @override
   State<HomeTab> createState() => _HomeTabState();
 }
 
-class _HomeTabState extends State<HomeTab>
-    with AutomaticKeepAliveClientMixin<HomeTab> {
-  bool isAdding = false;
-  bool isEditing = false;
+class _HomeTabState extends State<HomeTab> {
   RoomSlot? selectedSlot;
-  @override
-  bool get wantKeepAlive => true;
-  Widget _buildActionButtons() {
-    const Color addColor = Color(0xFFF09598);
-    const Color editColor = Color(0xFF3F3735);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    isAdding = true;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: addColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Add',
-                  style: TextStyle(color: Colors.black, fontSize: 18),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: ElevatedButton(
-                onPressed: selectedSlot == null
-                    ? null // ✅ ปิดปุ่มถ้ายังไม่ได้เลือกห้อง
-                    : () {
-                        setState(() {
-                          isEditing = true;
-                          isAdding = false;
-                        });
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: selectedSlot == null
-                      ? Colors.grey
-                      : editColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Edit',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  void _goToRequestForm(RoomSlot slot) {
+    setState(() {
+      selectedSlot = slot;
+    });
   }
 
-  void resetEditState() {
+  void _backToList() {
     setState(() {
-      isEditing = false;
-      selectedSlot = null; // รีเซ็ตห้องที่เลือก
+      selectedSlot = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    // ✅ กรณี Add
-    if (isAdding) {
-      return AddEditForm(
-        isEdit: false,
-        onCancel: () {
-          setState(() {
-            isAdding = false;
-          });
-        },
+    // ถ้า selectedSlot != null แสดง RequestForm
+    if (selectedSlot != null) {
+      return RequestForm(
+        roomName: selectedSlot!.room,
+        initialSlot: selectedSlot!.timeSlots,
+        onCancel: _backToList,
       );
     }
 
-    // กรณี Edit
-    if (isEditing && selectedSlot != null) {
-      return AddEditForm(
-        isEdit: true,
-        roomSlot: selectedSlot,
-        onCancel: () {
-          resetEditState(); // รีเซ็ตเฉพาะ Edit
-        },
-      );
-    }
-
-    // ✅ แสดง Browse ปกติ
+    // ถ้า selectedSlot == null แสดง BaseBrowseScreen
     return BaseBrowseScreen(
-      userRole: UserRole.staff,
+      userRole: UserRole.user,
       userName: widget.userName,
-      actionButtons: _buildActionButtons(),
-      onSlotSelected: (slot) {
-        setState(() {
-          selectedSlot = slot; // ✅ เก็บห้องที่เลือก
-        });
-      },
+      actionButtons: null,
+      onSlotSelected: _goToRequestForm,
+    );
+  }
+}
+
+// ==========================
+// status
+// ==========================
+
+/// ===== THEME COLORS =====
+class AppColors {
+  static const finlandia = Color(0xFF51624F); // Top bar
+  static const hampton = Color(0xFFE6D5A9); // Page background
+  static const norway = Color(0xFFAFBEA2); // Logo circle bg
+  static const edward = Color(0xFF9CB4AC); // Approved chip
+  static const chipPending = Color(0xFFFDFD96); // Pending chip // 0xFFFBFB3C
+  static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
+}
+
+/// ===== MODEL =====
+enum BookingStatus { pending, approved, rejected }
+
+class UserReservation {
+  final String roomCode;
+  final DateTime date;
+  final TimeOfDay start;
+  final TimeOfDay end;
+  final BookingStatus status;
+
+  const UserReservation({
+    required this.roomCode,
+    required this.date,
+    required this.start,
+    required this.end,
+    required this.status,
+  });
+}
+
+/// ===== PAGE (USER) — Stateful =====
+class StatusTab extends StatefulWidget {
+  const StatusTab({super.key});
+
+  @override
+  State<StatusTab> createState() => _StatusTabState();
+}
+
+class _StatusTabState extends State<StatusTab> {
+  late UserReservation _todayItem;
+
+  @override
+  void initState() {
+    super.initState();
+    _todayItem = UserReservation(
+      // <- เอา const ออก
+      roomCode: 'LR-104',
+      date: DateTime(2025, 9, 28),
+      start: const TimeOfDay(hour: 8, minute: 0),
+      end: const TimeOfDay(hour: 10, minute: 0),
+      status: BookingStatus.pending,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = _todayItem;
+
+    return Scaffold(
+      backgroundColor: AppColors.hampton,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              // Title
+              Text(
+                'Status',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black.withOpacity(0.92),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // White card
+              _ReservationCardUser(item: item),
+
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ===== WHITE CARD (USER VIEW) =====
+class _ReservationCardUser extends StatelessWidget {
+  final UserReservation item;
+  const _ReservationCardUser({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = '${_dd(item.date)} ${_mon(item.date)} ${item.date.year}';
+    String hhmm(TimeOfDay t) =>
+        '${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF2EDD9),
+        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // LEFT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.roomCode,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  dateStr,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${hhmm(item.start)}-${hhmm(item.end)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // RIGHT: status chip
+          _StatusChip(status: item.status),
+        ],
+      ),
+    );
+  }
+
+  String _dd(DateTime d) => d.day.toString().padLeft(2, '0');
+  String _mon(DateTime d) {
+    const m = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return m[d.month];
+  }
+}
+
+/// ===== STATUS CHIP =====
+class _StatusChip extends StatelessWidget {
+  final BookingStatus status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    late Color bg;
+    late Color border;
+    late String label;
+    switch (status) {
+      case BookingStatus.pending:
+        bg = AppColors.chipPending;
+        border = Color(0xFFA08A0D);
+        label = 'Pending';
+        break;
+      case BookingStatus.approved:
+        bg = AppColors.edward;
+        label = 'Approved';
+        break;
+      case BookingStatus.rejected:
+        bg = AppColors.chipRejected;
+        label = 'Rejected';
+        break;
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border, width: 1.5),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          color: Color(0xFFA08A0D),
+        ),
+      ),
     );
   }
 }
@@ -260,7 +405,7 @@ class _HistoryTabState extends State<HistoryTab> {
       ),
       HistoryItem(
         reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-104",
+        roomCode: "MR-104",
         date: "24 Sep 2025",
         time: "15.00-17.00",
         status: "Rejected",
@@ -268,21 +413,63 @@ class _HistoryTabState extends State<HistoryTab> {
         rejectReason: "Room already booked by another department.",
       ),
       HistoryItem(
-        reqIdAndUser: "6E3510/xxx Lion Sins",
-        roomCode: "MR-101",
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "SR-101",
         date: "20 Sep 2025",
         time: "10.00-12.00",
         status: "Approved",
         approverName: "Ajarn.Tock",
       ),
       HistoryItem(
-        reqIdAndUser: "6E3510/xxx Nick Sakon",
-        roomCode: "SR-110",
-        date: "1 Sep 2025",
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "SR-106",
+        date: "10 Sep 2025",
         time: "13.00-15.00",
         status: "Rejected",
         approverName: "Ajarn.Tock",
         rejectReason: "Room already booked by another department.",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-105",
+        date: "9 Sep 2025",
+        time: "8.00-10.00",
+        status: "Approved",
+        approverName: "Ajarn.Tick",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-105",
+        date: "8 Sep 2025",
+        time: "8.00-10.00",
+        status: "Rejected",
+        approverName: "Ajarn.Tick",
+        rejectReason: "Room already booked by another department.",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-105",
+        date: "7 Sep 2025",
+        time: "8.00-10.00",
+        status: "Rejected",
+        approverName: "Ajarn.Tick",
+        rejectReason: "Room already booked by another department.",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-105",
+        date: "6 Sep 2025",
+        time: "8.00-10.00",
+        status: "Approved",
+        approverName: "Ajarn.Tick",
+      ),
+      HistoryItem(
+        reqIdAndUser: "6E3510/xxx Leo Jane",
+        roomCode: "LR-105",
+        date: "5 Sep 2025",
+        time: "8.00-10.00",
+        status: "Approved",
+        approverName: "Ajarn.Tick",
       ),
     ];
   }
@@ -308,7 +495,7 @@ class _HistoryTabState extends State<HistoryTab> {
                     children: const [
                       Center(
                         child: Text(
-                          "History Staff",
+                          "History User",
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w600,
@@ -321,7 +508,7 @@ class _HistoryTabState extends State<HistoryTab> {
                         children: [
                           Expanded(
                             child: Text(
-                              "User/Room",
+                              "Room",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
@@ -343,6 +530,7 @@ class _HistoryTabState extends State<HistoryTab> {
                     ],
                   ),
                 ),
+
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.only(
@@ -355,7 +543,7 @@ class _HistoryTabState extends State<HistoryTab> {
                       final item = dataList[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: HistoryCardStaff(item: item),
+                        child: HistoryCardUser(item: item),
                       );
                     },
                   ),
@@ -390,10 +578,10 @@ class HistoryItem {
   });
 }
 
-// ================== HISTORY CARD (STAFF STYLE) ==================
-class HistoryCardStaff extends StatelessWidget {
+// ================== HISTORY CARD (USER STYLE) ==================
+class HistoryCardUser extends StatelessWidget {
   final HistoryItem item;
-  const HistoryCardStaff({super.key, required this.item});
+  const HistoryCardUser({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -423,6 +611,7 @@ class HistoryCardStaff extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // main row (left info + right status)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -480,6 +669,8 @@ class HistoryCardStaff extends StatelessWidget {
               ),
             ],
           ),
+
+          // 👇 move the reason section OUTSIDE the Row
           if (isRejected) ...[
             const SizedBox(height: 8),
             const Text(

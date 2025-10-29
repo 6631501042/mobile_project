@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import '../modelsData/room_data.dart'; // Import necessary for UserRole enum
+import '../screensOfBrowseRoomList/base_browse_screen.dart'; // Import BaseBrowseScreen
+import 'package:mobile_project/staff/add_edit_form.dart'; //for staff
 
-class DashboardStaff extends StatefulWidget {
-  const DashboardStaff({super.key});
+class Staff extends StatefulWidget {
+  const Staff({super.key});
 
   @override
-  State<DashboardStaff> createState() => _DashboardStaffState();
+  State<Staff> createState() => _StaffState();
 }
 
-class _DashboardStaffState extends State<DashboardStaff> {
+class _StaffState extends State<Staff> {
+  final String userName = 'Staff001';
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: Color(0xFFD8C38A),
+        backgroundColor: const Color(0xFFD8C38A),
         // appbar
         appBar: AppBar(
           backgroundColor: const Color(0xFF476C5E),
@@ -35,20 +39,19 @@ class _DashboardStaffState extends State<DashboardStaff> {
                   ),
                 ],
               ),
-              // ajarn name
+              // staff name / logout button
               Row(
                 children: [
-                  const Text(
-                    'Staff001',
+                  Text(
+                    userName,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
-                  // logout button
                   TextButton(
                     onPressed: () {},
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.redAccent,
-                      side: BorderSide(color: Colors.white),
+                      side: const BorderSide(color: Colors.white),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 5,
                         vertical: 5,
@@ -57,7 +60,7 @@ class _DashboardStaffState extends State<DashboardStaff> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'LOGOUT',
                       style: TextStyle(fontSize: 12, color: Colors.white),
                     ),
@@ -68,154 +71,254 @@ class _DashboardStaffState extends State<DashboardStaff> {
           ),
         ),
 
-        //body
-        body: Center(
-          child: Column(
-            children: [
-              // dashboard
-              SizedBox(height: 30),
-              Text(
-                'Dashboard',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 10),
-              Text(
-                '20',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 30),
+        // tab bar
+        body: TabBarView(
+          children: [
+            // home
+            HomeTab(userName: userName),
+            // history
+            HistoryTab(),
+            // dashboard
+            DashboardTab(),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          color: const Color(0xFF476C5E),
+          child: const TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            tabs: [
+              Tab(icon: Icon(Icons.home), text: 'Home'),
+              Tab(icon: Icon(Icons.schedule), text: 'History'),
+              Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-              // grid cards
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 5,
-                  // card
-                  children: [
-                    // card 1
-                    Card(
-                      color: Colors.greenAccent[100],
-                      elevation: 4,
-                      child: InkWell(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/free.png',
-                                // width: 20,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Free Slots',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              Text('5', style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // card 2
-                    Card(
-                      color: Colors.amberAccent[100],
-                      elevation: 4,
-                      child: InkWell(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/pending.png',
-                                // width: 20,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Pending Slots',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              Text('5', style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // card 3
-                    Card(
-                      color: Colors.blueAccent[100],
-                      elevation: 4,
-                      child: InkWell(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/reserve.png',
-                                // width: 20,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Reserved Slots',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              Text('7', style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // card 4
-                    Card(
-                      color: Colors.redAccent[100],
-                      elevation: 4,
-                      child: InkWell(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/disable.png',
-                                // width: 20,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Disabled Rooms',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              Text('3', style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+// ==========================
+// home
+// ==========================
+class HomeTab extends StatefulWidget  {
+  final String userName;
+  const HomeTab({super.key, required this.userName});
+@override
+  State<HomeTab> createState() => _HomeTabState();
+}
+class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<HomeTab> {
+  bool isAdding = false;
+  bool isEditing = false;
+  RoomSlot? selectedSlot;
+  @override
+  bool get wantKeepAlive => true;
+  Widget _buildActionButtons() {
+    const Color addColor = Color(0xFFF09598);
+    const Color editColor = Color(0xFF3F3735);
+
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    isAdding = true;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: addColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Add',
+                  style: TextStyle(color: Colors.black, fontSize: 18),
                 ),
               ),
-              SizedBox(height: 20),
-              // tab bar
-              TabBar(
-                labelColor: Colors.black,
-                indicatorColor: Colors.black,
-                tabs: [
-                  Tab(text: 'Home', icon: Icon(Icons.home)),
-                  Tab(text: 'History', icon: Icon(Icons.schedule)),
-                  Tab(text: 'Dashboard', icon: Icon(Icons.dashboard)),
-                ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: ElevatedButton(
+                onPressed: selectedSlot == null
+                    ? null // ✅ ปิดปุ่มถ้ายังไม่ได้เลือกห้อง
+                    : () {
+                        setState(() {
+                          isEditing = true;
+                          isAdding = false;
+                        });
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      selectedSlot == null ? Colors.grey : editColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Edit',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  void resetEditState() {
+    setState(() {
+      isEditing = false;
+      selectedSlot = null; // รีเซ็ตห้องที่เลือก
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    // ✅ กรณี Add
+    if (isAdding) {
+      return AddEditForm(
+        isEdit: false,
+        onCancel: () {
+          setState(() {
+            isAdding = false;
+          });
+        },
+      );
+    }
+
+      // กรณี Edit
+    if (isEditing && selectedSlot != null) {
+      return AddEditForm(
+        isEdit: true,
+        roomSlot: selectedSlot,
+        onCancel: () {
+          resetEditState(); // รีเซ็ตเฉพาะ Edit
+        },
+      );
+    }
+
+    // ✅ แสดง Browse ปกติ
+    return BaseBrowseScreen(
+      userRole: UserRole.staff,
+      userName: widget.userName,
+      actionButtons: _buildActionButtons(),
+      onSlotSelected: (slot) {
+        setState(() {
+          selectedSlot = slot; // ✅ เก็บห้องที่เลือก
+        });
+      },
+    );
+  }
+}
+
+// ==========================
+// history
+// ==========================
+class HistoryTab extends StatelessWidget {
+  const HistoryTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'Reservation History',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+// ==========================
+// dashboard
+// ==========================
+class DashboardTab extends StatelessWidget {
+  const DashboardTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 30),
+          const Text(
+            'Dashboard',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '20',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 30),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              crossAxisSpacing: 5,
+              mainAxisSpacing: 5,
+              children: [
+                _card(
+                  'assets/images/free.png',
+                  'Free Slots',
+                  '5',
+                  Colors.greenAccent[100]!,
+                ),
+                _card(
+                  'assets/images/pending.png',
+                  'Pending Slots',
+                  '5',
+                  Colors.amberAccent[100]!,
+                ),
+                _card(
+                  'assets/images/reserve.png',
+                  'Reserved Slots',
+                  '7',
+                  Colors.blueAccent[100]!,
+                ),
+                _card(
+                  'assets/images/disable.png',
+                  'Disabled Rooms',
+                  '3',
+                  Colors.redAccent[100]!,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _card(String img, String title, String value, Color color) {
+    return Card(
+      color: color,
+      elevation: 4,
+      child: InkWell(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(img, height: 60, fit: BoxFit.cover),
+              const SizedBox(height: 10),
+              Text(title, style: const TextStyle(fontSize: 16)),
+              Text(value, style: const TextStyle(fontSize: 16)),
             ],
           ),
         ),
