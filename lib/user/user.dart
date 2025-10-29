@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
-import '../modelsData/room_data.dart'; 
+import '../modelsData/room_data.dart';
 import '../screensOfBrowseRoomList/base_browse_screen.dart'; // ต้อง import base_browse_screen
 import 'package:mobile_project/user/request_form.dart'; //มันคือ request form ของ user
 
@@ -12,6 +12,7 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
+  final String userName = '6631501xxx';
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -42,8 +43,8 @@ class _UserState extends State<User> {
               // user name / logout button
               Row(
                 children: [
-                  const Text(
-                    '6631501xxx',
+                  Text(
+                    userName,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
@@ -73,7 +74,7 @@ class _UserState extends State<User> {
         ),
 
         // tab bar
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             // home
             HomeTab(userName: userName),
@@ -116,7 +117,7 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  RoomSlot? selectedSlot; 
+  RoomSlot? selectedSlot;
 
   void _goToRequestForm(RoomSlot slot) {
     setState(() {

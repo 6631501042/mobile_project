@@ -11,6 +11,7 @@ class Approver extends StatefulWidget {
 }
 
 class _ApproverState extends State<Approver> {
+  final String userName = 'Ajarn.Tick';
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -41,8 +42,8 @@ class _ApproverState extends State<Approver> {
               // staff name / logout button
               Row(
                 children: [
-                  const Text(
-                    'Ajarn.Tick',
+                  Text(
+                    userName,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
@@ -72,7 +73,7 @@ class _ApproverState extends State<Approver> {
         ),
 
         // tab bar
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             // home
             HomeTab(userName: userName),
@@ -112,11 +113,7 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BaseBrowseScreen(
-      userRole: UserRole.user,
-      userName: userName,
-
-    );
+    return BaseBrowseScreen(userRole: UserRole.user, userName: userName);
   }
 }
 
@@ -127,17 +124,17 @@ class HomeTab extends StatelessWidget {
 /// ========== THEME ==========
 class C {
   static const finlandia = Color(0xFF51624F);
-  static const hampton   = Color(0xFFE6D5A9);
-  static const norway    = Color(0xFFAFBEA2);
-  static const cardBg    = Color(0xFFF9F5E5);
+  static const hampton = Color(0xFFE6D5A9);
+  static const norway = Color(0xFFAFBEA2);
+  static const cardBg = Color(0xFFF9F5E5);
 
   // ปุ่ม Approve/Reject ให้เหมือนภาพ
-  static const approveBg     = Color(0xFFD9EBFF);
+  static const approveBg = Color(0xFFD9EBFF);
   static const approveBorder = Color(0xFF9BC3F8);
-  static const approveText   = Color(0xFF245B96);
-  static const rejectBg      = Color(0xFFFFD4D4);
-  static const rejectBorder  = Color(0xFFE89999);
-  static const rejectText    = Color(0xFF7F1F1F);
+  static const approveText = Color(0xFF245B96);
+  static const rejectBg = Color(0xFFFFD4D4);
+  static const rejectBorder = Color(0xFFE89999);
+  static const rejectText = Color(0xFF7F1F1F);
 }
 
 /// ========== DOMAIN ==========
@@ -161,15 +158,15 @@ class Reservation {
   });
 
   Reservation copyWith({RStatus? status}) => Reservation(
-        id: id,
-        userId: userId,
-        userName: userName,
-        roomCode: roomCode,
-        date: date,
-        start: start,
-        end: end,
-        status: status ?? this.status,
-      );
+    id: id,
+    userId: userId,
+    userName: userName,
+    roomCode: roomCode,
+    date: date,
+    start: start,
+    end: end,
+    status: status ?? this.status,
+  );
 }
 
 class RLog {
@@ -200,7 +197,7 @@ abstract class RRepo {
 
 class MockRepo implements RRepo {
   final _pendingCtrl = StreamController<List<Reservation>>.broadcast();
-  final _logsCtrl    = StreamController<List<RLog>>.broadcast();
+  final _logsCtrl = StreamController<List<RLog>>.broadcast();
   List<Reservation> _pending = [];
   List<RLog> _logs = [];
 
@@ -257,7 +254,7 @@ class MockRepo implements RRepo {
         result: status,
         ts: DateTime.now(),
         reason: reason,
-      )
+      ),
     ];
     _logsCtrl.add(List.unmodifiable(_logs));
   }
@@ -356,7 +353,9 @@ class _ApproverPageState extends State<ApproverPage> {
                             reason: reason,
                           );
                           if (!mounted) return;
-                          _toast('${items[i].roomCode} • Rejected\nReason: $reason');
+                          _toast(
+                            '${items[i].roomCode} • Rejected\nReason: $reason',
+                          );
                         },
                       ),
                     );
@@ -399,14 +398,18 @@ class _HeaderRow extends StatelessWidget {
   const _HeaderRow();
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          Text('User/Room',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-          Text('Action',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: const [
+      Text(
+        'User/Room',
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+      ),
+      Text(
+        'Action',
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+      ),
+    ],
+  );
 }
 
 class _Card extends StatelessWidget {
@@ -435,52 +438,70 @@ class _Card extends StatelessWidget {
             color: Colors.black.withOpacity(0.2),
             blurRadius: 12,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${r.userId}  ${r.userName}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black.withOpacity(0.75),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  r.roomCode,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black.withOpacity(0.9),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  dateStr,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black.withOpacity(0.45),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${t(r.start)}-${t(r.end)}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black.withOpacity(0.45),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${r.userId}  ${r.userName}',
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black.withOpacity(0.75),
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(height: 6),
-              Text(r.roomCode,
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black.withOpacity(0.9))),
-              const SizedBox(height: 8),
-              Text(dateStr,
-                  style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black.withOpacity(0.45),
-                      fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              Text('${t(r.start)}-${t(r.end)}',
-                  style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black.withOpacity(0.45),
-                      fontWeight: FontWeight.w700)),
+              _Pill.approve('Approve', onApprove),
+              const SizedBox(height: 10),
+              _Pill.reject('Reject', () async {
+                final reason = await _askReason(context);
+                if (reason == null || reason.isEmpty) return;
+                await onReject(reason);
+              }),
             ],
           ),
-        ),
-        const SizedBox(width: 10),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          _Pill.approve('Approve', onApprove),
-          const SizedBox(height: 10),
-          _Pill.reject('Reject', () async {
-            final reason = await _askReason(context);
-            if (reason == null || reason.isEmpty) return;
-            await onReject(reason);
-          }),
-        ])
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -499,61 +520,78 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: bg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: border, width: 1.4),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () async => await onTap(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: text)),
+    color: bg,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+      side: BorderSide(color: border, width: 1.4),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () async => await onTap(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: text,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// ========== UTIL ==========
 String _two(int v) => v.toString().padLeft(2, '0');
-String _mon(int m) =>
-    const ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m];
+String _mon(int m) => const [
+  '',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+][m];
 
 Future<String?> _askReason(BuildContext context) => showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        final c = TextEditingController();
-        return AlertDialog(
-          title: const Text('Reason for rejection'),
-          content: TextField(
-            controller: c,
-            autofocus: true,
-            maxLines: 2,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              hintText: 'Type reason…',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Cancel')),
-            ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(c.text.trim()),
-                child: const Text('Reject')),
-          ],
-        );
-      },
+  context: context,
+  barrierDismissible: false,
+  builder: (ctx) {
+    final c = TextEditingController();
+    return AlertDialog(
+      title: const Text('Reason for rejection'),
+      content: TextField(
+        controller: c,
+        autofocus: true,
+        maxLines: 2,
+        textInputAction: TextInputAction.done,
+        decoration: const InputDecoration(
+          hintText: 'Type reason…',
+          border: OutlineInputBorder(),
+        ),
+        onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(null),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(ctx).pop(c.text.trim()),
+          child: const Text('Reject'),
+        ),
+      ],
     );
-
+  },
+);
 
 // ==========================
 // history

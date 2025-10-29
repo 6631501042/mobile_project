@@ -11,6 +11,7 @@ class Staff extends StatefulWidget {
 }
 
 class _StaffState extends State<Staff> {
+  final String userName = 'Staff001';
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -41,8 +42,8 @@ class _StaffState extends State<Staff> {
               // staff name / logout button
               Row(
                 children: [
-                  const Text(
-                    'Staff001',
+                  Text(
+                    userName,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
@@ -72,7 +73,7 @@ class _StaffState extends State<Staff> {
         ),
 
         // tab bar
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             // home
             HomeTab(userName: userName),
@@ -103,13 +104,15 @@ class _StaffState extends State<Staff> {
 // ==========================
 // home
 // ==========================
-class HomeTab extends StatefulWidget  {
+class HomeTab extends StatefulWidget {
   final String userName;
   const HomeTab({super.key, required this.userName});
-@override
+  @override
   State<HomeTab> createState() => _HomeTabState();
 }
-class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<HomeTab> {
+
+class _HomeTabState extends State<HomeTab>
+    with AutomaticKeepAliveClientMixin<HomeTab> {
   bool isAdding = false;
   bool isEditing = false;
   RoomSlot? selectedSlot;
@@ -118,7 +121,6 @@ class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<Ho
   Widget _buildActionButtons() {
     const Color addColor = Color(0xFFF09598);
     const Color editColor = Color(0xFF3F3735);
-
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -161,8 +163,9 @@ class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<Ho
                         });
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      selectedSlot == null ? Colors.grey : editColor,
+                  backgroundColor: selectedSlot == null
+                      ? Colors.grey
+                      : editColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -179,6 +182,7 @@ class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<Ho
       ),
     );
   }
+
   void resetEditState() {
     setState(() {
       isEditing = false;
@@ -202,7 +206,7 @@ class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<Ho
       );
     }
 
-      // กรณี Edit
+    // กรณี Edit
     if (isEditing && selectedSlot != null) {
       return AddEditForm(
         isEdit: true,
