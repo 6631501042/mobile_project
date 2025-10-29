@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import '../modelsData/room_data.dart'; 
+import '../screensOfBrowseRoomList/base_browse_screen.dart'; // ต้อง import base_browse_screen
+import 'package:mobile_project/user/request_form.dart'; //มันคือ request form ของ user
 
 class User extends StatefulWidget {
   const User({super.key});
@@ -72,7 +76,7 @@ class _UserState extends State<User> {
         body: const TabBarView(
           children: [
             // home
-            HomeTab(),
+            HomeTab(userName: userName),
             // status
             StatusTab(),
             // history
@@ -103,16 +107,46 @@ class _UserState extends State<User> {
 // ==========================
 // home
 // ==========================
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+class HomeTab extends StatefulWidget {
+  final String userName;
+  const HomeTab({super.key, required this.userName});
+
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  RoomSlot? selectedSlot; 
+
+  void _goToRequestForm(RoomSlot slot) {
+    setState(() {
+      selectedSlot = slot;
+    });
+  }
+
+  void _backToList() {
+    setState(() {
+      selectedSlot = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Welcome to Home',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      ),
+    // ถ้า selectedSlot != null แสดง RequestForm
+    if (selectedSlot != null) {
+      return RequestForm(
+        roomName: selectedSlot!.room,
+        initialSlot: selectedSlot!.timeSlots,
+        onCancel: _backToList,
+      );
+    }
+
+    // ถ้า selectedSlot == null แสดง BaseBrowseScreen
+    return BaseBrowseScreen(
+      userRole: UserRole.user,
+      userName: widget.userName,
+      actionButtons: null,
+      onSlotSelected: _goToRequestForm,
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../modelsData/room_data.dart';
+import '../screensOfBrowseRoomList/base_browse_screen.dart';
 
 class Approver extends StatefulWidget {
   const Approver({super.key});
@@ -73,7 +75,7 @@ class _ApproverState extends State<Approver> {
         body: const TabBarView(
           children: [
             // home
-            HomeTab(),
+            HomeTab(userName: userName),
             // status
             StatusTab(),
             // history
@@ -105,15 +107,15 @@ class _ApproverState extends State<Approver> {
 // home
 // ==========================
 class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+  final String userName;
+  const HomeTab({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Welcome to Home',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      ),
+    return BaseBrowseScreen(
+      userRole: UserRole.user,
+      userName: userName,
+
     );
   }
 }

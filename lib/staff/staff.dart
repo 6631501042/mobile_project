@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../modelsData/room_data.dart'; // Import necessary for UserRole enum
+import '../screensOfBrowseRoomList/base_browse_screen.dart'; // Import BaseBrowseScreen
+import 'package:mobile_project/staff/add_edit_form.dart'; //for staff
 
 class Staff extends StatefulWidget {
   const Staff({super.key});
@@ -72,7 +75,7 @@ class _StaffState extends State<Staff> {
         body: const TabBarView(
           children: [
             // home
-            HomeTab(),
+            HomeTab(userName: userName),
             // history
             HistoryTab(),
             // dashboard
@@ -100,16 +103,126 @@ class _StaffState extends State<Staff> {
 // ==========================
 // home
 // ==========================
-class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+class HomeTab extends StatefulWidget  {
+  final String userName;
+  const HomeTab({super.key, required this.userName});
+@override
+  State<HomeTab> createState() => _HomeTabState();
+}
+class _HomeTabState extends State<HomeTab> with AutomaticKeepAliveClientMixin<HomeTab> {
+  bool isAdding = false;
+  bool isEditing = false;
+  RoomSlot? selectedSlot;
+  @override
+  bool get wantKeepAlive => true;
+  Widget _buildActionButtons() {
+    const Color addColor = Color(0xFFF09598);
+    const Color editColor = Color(0xFF3F3735);
+
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    isAdding = true;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: addColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Add',
+                  style: TextStyle(color: Colors.black, fontSize: 18),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: ElevatedButton(
+                onPressed: selectedSlot == null
+                    ? null // ✅ ปิดปุ่มถ้ายังไม่ได้เลือกห้อง
+                    : () {
+                        setState(() {
+                          isEditing = true;
+                          isAdding = false;
+                        });
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      selectedSlot == null ? Colors.grey : editColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Edit',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  void resetEditState() {
+    setState(() {
+      isEditing = false;
+      selectedSlot = null; // รีเซ็ตห้องที่เลือก
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Welcome to Home',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      ),
+    super.build(context);
+
+    // ✅ กรณี Add
+    if (isAdding) {
+      return AddEditForm(
+        isEdit: false,
+        onCancel: () {
+          setState(() {
+            isAdding = false;
+          });
+        },
+      );
+    }
+
+      // กรณี Edit
+    if (isEditing && selectedSlot != null) {
+      return AddEditForm(
+        isEdit: true,
+        roomSlot: selectedSlot,
+        onCancel: () {
+          resetEditState(); // รีเซ็ตเฉพาะ Edit
+        },
+      );
+    }
+
+    // ✅ แสดง Browse ปกติ
+    return BaseBrowseScreen(
+      userRole: UserRole.staff,
+      userName: widget.userName,
+      actionButtons: _buildActionButtons(),
+      onSlotSelected: (slot) {
+        setState(() {
+          selectedSlot = slot; // ✅ เก็บห้องที่เลือก
+        });
+      },
     );
   }
 }
