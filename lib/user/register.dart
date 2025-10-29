@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_project/user/login.dart';
 
 class Register extends StatelessWidget {
   const Register({super.key});
@@ -28,14 +29,14 @@ class Register extends StatelessWidget {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 5),
-              Text(
-                'Register my account',
-                style: TextStyle(fontSize: 14),
-              ),
+              Text('Register my account', style: TextStyle(fontSize: 14)),
               SizedBox(height: 20),
 
               // Username
-              Align(alignment: Alignment.centerLeft, child: Text('Enter your username')),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Enter your username'),
+              ),
               TextField(
                 controller: username,
                 decoration: InputDecoration(
@@ -50,7 +51,10 @@ class Register extends StatelessWidget {
               SizedBox(height: 10),
 
               // Email
-              Align(alignment: Alignment.centerLeft, child: Text('Enter your email')),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Enter your email'),
+              ),
               TextField(
                 controller: email,
                 decoration: InputDecoration(
@@ -65,7 +69,10 @@ class Register extends StatelessWidget {
               SizedBox(height: 10),
 
               // Password
-              Align(alignment: Alignment.centerLeft, child: Text('Enter your password')),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Enter your password'),
+              ),
               TextField(
                 controller: password,
                 obscureText: true,
@@ -81,7 +88,10 @@ class Register extends StatelessWidget {
               SizedBox(height: 20),
 
               // Confirm Password
-              Align(alignment: Alignment.centerLeft, child: Text('Confirm your password')),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Confirm your password'),
+              ),
               TextField(
                 controller: confirm_password,
                 obscureText: true,
@@ -131,7 +141,12 @@ class Register extends StatelessWidget {
                         vertical: 8,
                       ),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Login()),
+                      );
+                    },
                     child: Text('Cancel'),
                   ),
                 ],
