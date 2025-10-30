@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../modelsData/room_data.dart'; 
+import '../modelsData/room_data.dart';
+
 class AddEditForm extends StatefulWidget {
   final bool isEdit;
   final RoomSlot? roomSlot;
@@ -47,11 +48,11 @@ class _AddEditFormState extends State<AddEditForm> {
   void initState() {
     super.initState();
     // ถ้าเป็นโหมด Edit และมีข้อมูลห้องส่งมา
-  if (widget.isEdit && widget.roomSlot != null) {
-    roomNameController.text = widget.roomSlot!.room;
-    selectedSlot = widget.roomSlot!.timeSlots;
-    isEnabled = widget.roomSlot!.status == 'Free';
-  }
+    if (widget.isEdit && widget.roomSlot != null) {
+      roomNameController.text = widget.roomSlot!.room;
+      selectedSlot = widget.roomSlot!.timeSlots;
+      isEnabled = widget.roomSlot!.status == 'Free';
+    }
   }
 
   @override
@@ -159,30 +160,26 @@ class _AddEditFormState extends State<AddEditForm> {
 
           const SizedBox(height: 20),
 
-          // แสดงเฉพาะในโหมด Edit เท่านั้น
+          // โหมด Edit: แสดงช่วงเวลาเฉยๆ
           if (widget.isEdit) ...[
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Select Time Slot', style: TextStyle(fontSize: 22)),
+              child: Text('Time Slot', style: TextStyle(fontSize: 22)),
             ),
             const SizedBox(height: 8),
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    buildSlot('8:00-10:00', isLeft: true),
-                    buildSlot('10:00-12:00', isLeft: false),
-                  ],
+            TextFormField(
+              initialValue: selectedSlot ?? 'No time slot',
+              readOnly: true,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 5,
+                  horizontal: 10,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    buildSlot('13:00-15:00', isLeft: true),
-                    buildSlot('15:00-17:00', isLeft: false),
-                  ],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
+                filled: true,
+              ),
             ),
             const SizedBox(height: 30),
           ],
@@ -209,63 +206,68 @@ class _AddEditFormState extends State<AddEditForm> {
               ),
               const SizedBox(width: 20),
               ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xFF4E5B4C),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-  ),
-  onPressed: () {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(widget.isEdit ? 'Confirm Edit' : 'Confirm Add'),
-          content: Text(
-            widget.isEdit
-                ? 'Are you sure you want to update this room?'
-                : 'Are you sure you want to add this room?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context), // ปิด dialog
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // ปิด dialog ก่อน
-                final name = roomNameController.text;
-                final status = isEnabled ? 'Free' : 'Disable';
-                final slot = widget.isEdit
-                    ? selectedSlot ?? 'None'
-                    : '8:00-10:00, 10:00-12:00, 13:00-15:00, 15:00-17:00';
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      widget.isEdit
-                          ? 'Updated: $name ($status) — $slot'
-                          : 'Added: $name ($status) — $slot',
-                    ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4E5B4C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4E5B4C),
-              ),
-              child: const Text('Confirm', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  },
-  child: Text(
-    widget.isEdit ? 'Update' : 'Add',
-    style: const TextStyle(color: Colors.white, fontSize: 22),
-  ),
-),
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text(
+                          widget.isEdit ? 'Confirm Edit' : 'Confirm Add',
+                        ),
+                        content: Text(
+                          widget.isEdit
+                              ? 'Are you sure you want to update this room?'
+                              : 'Are you sure you want to add this room?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context), // ปิด dialog
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context); // ปิด dialog ก่อน
+                              final name = roomNameController.text;
+                              final status = isEnabled ? 'Free' : 'Disable';
+                              final slot = widget.isEdit
+                                  ? selectedSlot ?? 'None'
+                                  : '8:00-10:00, 10:00-12:00, 13:00-15:00, 15:00-17:00';
 
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    widget.isEdit
+                                        ? 'Updated: $name ($status) — $slot'
+                                        : 'Added: $name ($status) — $slot',
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4E5B4C),
+                            ),
+                            child: const Text(
+                              'Confirm',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: Text(
+                  widget.isEdit ? 'Update' : 'Add',
+                  style: const TextStyle(color: Colors.white, fontSize: 22),
+                ),
+              ),
             ],
           ),
         ],
