@@ -14,21 +14,42 @@ class BaseBrowseScreen extends StatefulWidget {
     this.actionButtons,
     this.onSlotSelected,
   });
-@override
+  @override
   State<BaseBrowseScreen> createState() => _BaseBrowseScreenState();
 }
-  class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
+
+class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   RoomSlot? _selectedSlot; // ✅ เก็บแถวที่ถูกเลือกไว้
 
   // ข้อมูลจำลองเดิม
   static final List<RoomSlot> _roomSlots = [
-    RoomSlot(no: 1, room: 'LR-101', timeSlots: '8:00-10:00', status: 'Reserved'),
-    RoomSlot(no: 2, room: 'LR-101', timeSlots: '10:00-12:00', status: 'Pending'),
+    RoomSlot(
+      no: 1,
+      room: 'LR-101',
+      timeSlots: '8:00-10:00',
+      status: 'Reserved',
+    ),
+    RoomSlot(
+      no: 2,
+      room: 'LR-101',
+      timeSlots: '10:00-12:00',
+      status: 'Pending',
+    ),
     RoomSlot(no: 3, room: 'LR-101', timeSlots: '13:00-15:00', status: 'Free'),
     RoomSlot(no: 4, room: 'LR-101', timeSlots: '15:00-17:00', status: 'Free'),
-    RoomSlot(no: 5, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Disabled'),
-    RoomSlot(no: 6, room: 'LR-102', timeSlots: '8:00-12:00', status: 'Disabled'),
-    RoomSlot(no: 7, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Request'),
+    RoomSlot(
+      no: 5,
+      room: 'LR-102',
+      timeSlots: '8:00-10:00',
+      status: 'Disabled',
+    ),
+    RoomSlot(
+      no: 6,
+      room: 'LR-102',
+      timeSlots: '8:00-12:00',
+      status: 'Disabled',
+    ),
+    RoomSlot(no: 7, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Free'),
   ];
 
   // กำหนดสี
@@ -51,7 +72,6 @@ class BaseBrowseScreen extends StatefulWidget {
         // 🛑 ลบ _buildFilterRow() ออกตามความต้องการ
         Expanded(child: _buildRoomListTable()),
         if (widget.actionButtons != null) widget.actionButtons!,
-
       ],
     );
   }
@@ -200,49 +220,64 @@ class BaseBrowseScreen extends StatefulWidget {
     );
   }
 
-    Widget _buildTableRow(RoomSlot slot, int index) {
+  Widget _buildTableRow(RoomSlot slot, int index) {
     bool isSelected = _selectedSlot == slot;
 
+    // 🚫 ปิดการคลิกถ้าห้องอยู่ในสถานะที่ไม่อนุญาต
+    bool isClickable =
+        !(slot.status == 'Pending' ||
+            slot.status == 'Reserved' ||
+            slot.status == 'Disabled');
+
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedSlot = slot;
-        });
-        if (widget.onSlotSelected != null) {
-          widget.onSlotSelected!(slot);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.amber.withOpacity(0.3) : Colors.transparent,
-          border: const Border(
-            bottom: BorderSide(color: Colors.black12, width: 0.5),
+      onTap: isClickable
+          ? () {
+              setState(() {
+                _selectedSlot = slot;
+              });
+              if (widget.onSlotSelected != null) {
+                widget.onSlotSelected!(slot);
+              }
+            }
+          : null, // ❌ ถ้าไม่อนุญาตให้คลิก, onTap จะเป็น null
+      child: Opacity(
+        opacity: isClickable ? 1.0 : 0.6, // ทำให้แถวที่คลิกไม่ได้ดูจางลง
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.amber.withOpacity(0.3)
+                : Colors.transparent,
+            border: const Border(
+              bottom: BorderSide(color: Colors.black12, width: 0.5),
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(flex: 1, child: Text('${slot.no}')),
-            Expanded(flex: 2, child: Text(slot.room)),
-            Expanded(flex: 2, child: Text(slot.timeSlots)),
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: slot.statusColor,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  slot.status,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+          child: Row(
+            children: [
+              Expanded(flex: 1, child: Text('${slot.no}')),
+              Expanded(flex: 2, child: Text(slot.room)),
+              Expanded(flex: 2, child: Text(slot.timeSlots)),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: slot.statusColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    slot.status,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-
 }
