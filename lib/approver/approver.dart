@@ -316,12 +316,11 @@ class _ApproverPageState extends State<ApproverPage> {
           child: Column(
             children: [
               // เติมระยะบน ~ เท่า AppBar เดิม เพื่อไม่ให้ตำแหน่งเลื่อน
-              const SizedBox(height: 76),
 
               const Center(
                 child: Text(
                   'Status',
-                  style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 35, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 18),

@@ -38,7 +38,7 @@ class BaseBrowseScreen extends StatefulWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Padding(
           padding: EdgeInsets.only(top: 8.0, bottom: 8.0, left: 16.0),
