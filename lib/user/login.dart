@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_project/user/user.dart';
 import 'package:mobile_project/user/register.dart';
+import 'package:mobile_project/staff/staff.dart';
+import 'package:mobile_project/approver/approver.dart';
 
 class Login extends StatelessWidget {
   const Login({super.key});
@@ -10,35 +12,63 @@ class Login extends StatelessWidget {
     final TextEditingController username = TextEditingController();
     final TextEditingController password = TextEditingController();
 
+    void handleLogin() {
+      final String user = username.text.trim();
+      final String pass = password.text.trim();
+
+      if (pass == '1234') {
+        if (user == 'staff001') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Staff()),
+          );
+        } else if (user == '6631501xxx') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const User()),
+          );
+        } else if (user == 'approver001') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Approver()),
+          );
+        } else {
+          _showError(context, 'Invalid username.');
+        }
+      } else {
+        _showError(context, 'Incorrect password.');
+      }
+    }
+
     return Scaffold(
-      backgroundColor: Color(0xFFD8C38A),
+      backgroundColor: const Color(0xFFE6D5A9),
       body: Center(
         child: Container(
           width: 300,
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset('assets/images/bird.png', height: 80),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-              // title
-              Text(
+              // Title
+              const Text(
                 'Room Reservation System',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 5),
-              Text(
+              const SizedBox(height: 5),
+              const Text(
                 'Please login to your account',
                 style: TextStyle(fontSize: 14),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-              // username
-              Align(alignment: Alignment.centerLeft, child: Text('Username')),
+              // Username
+              const Align(alignment: Alignment.centerLeft, child: Text('Username')),
               TextField(
                 controller: username,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
                   contentPadding: EdgeInsets.symmetric(
@@ -47,14 +77,14 @@ class Login extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-              // password
-              Align(alignment: Alignment.centerLeft, child: Text('Password')),
+              // Password
+              const Align(alignment: Alignment.centerLeft, child: Text('Password')),
               TextField(
                 controller: password,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
                   contentPadding: EdgeInsets.symmetric(
@@ -63,45 +93,40 @@ class Login extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-              // login button
+              // Login button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF4E5B4C),
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    backgroundColor: const Color(0xFF4E5B4C),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: Color(0xFF4E5B4C)),
+                      side: const BorderSide(color: Color(0xFF4E5B4C)),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const User()),
-                    );
-                  },
-                  child: Text('Login', style: TextStyle(color: Colors.white)),
+                  onPressed: handleLogin,
+                  child: const Text('Login', style: TextStyle(color: Colors.white)),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-              // create new
+              // Create new
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Don't have an account? "),
+                  const Text("Don't have an account? "),
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white70,
                       foregroundColor: Colors.blue,
-                      side: BorderSide(color: Colors.blue),
+                      side: const BorderSide(color: Colors.blue),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
@@ -112,13 +137,29 @@ class Login extends StatelessWidget {
                         MaterialPageRoute(builder: (context) => const Register()),
                       );
                     },
-                    child: Text('Create new'),
+                    child: const Text('Create new'),
                   ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showError(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }

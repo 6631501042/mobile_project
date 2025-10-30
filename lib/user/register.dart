@@ -12,7 +12,7 @@ class Register extends StatelessWidget {
     final TextEditingController email = TextEditingController();
 
     return Scaffold(
-      backgroundColor: Color(0xFFD8C38A),
+      backgroundColor: Color(0xFFE6D5A9),
       body: Center(
         child: Container(
           width: 300,
