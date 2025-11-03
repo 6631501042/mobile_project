@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_project/user/login.dart';
 import '../modelsData/room_data.dart';
-import '../screensOfBrowseRoomList/base_browse_screen.dart'; // ต้อง import base_browse_screen
-import 'package:mobile_project/user/request_form.dart'; //มันคือ request form ของ user
+import '../screensOfBrowseRoomList/base_browse_screen.dart';
+import 'package:mobile_project/user/request_form.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class User extends StatefulWidget {
   const User({super.key});
@@ -12,7 +16,92 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
-  final String userName = '6631501xxx';
+  final url = '192.168.50.51:3000';
+  bool isWaiting = false;
+  String username = '';
+  List? rooms;
+  // final String userName = '6631501xxx';
+
+  void popDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(title: const Text('Error'), content: Text(message));
+      },
+    );
+  }
+
+    void getRooms() async {
+    // get token from local storage
+    final storage = await SharedPreferences.getInstance();
+    String? token = storage.getString('token');
+    if (token == null) {
+      if (!mounted) return;
+      // return to login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (BuildContext context) => const Login()),
+      );
+      return;
+    }
+    // decode token to get user info
+    final user = jsonDecode(token);
+
+
+    setState(() {
+      isWaiting = true;
+      username = user['username'];
+    });
+
+
+    // get all rooms
+    try {
+      Uri uri = Uri.http(url, '/api/student/rooms');
+      http.Response response = await http
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
+      // check server's response
+      if (response.statusCode == 200) {
+        rooms = jsonDecode(response.body);
+      } else {
+        popDialog(response.body);
+      }
+    } on TimeoutException catch (e) {
+      debugPrint(e.message);
+      if (!mounted) return;
+      popDialog('Timeout error, try again!');
+    } catch (e) {
+      debugPrint(e.toString());
+      if (!mounted) return;
+      popDialog('Unknown error, try again!');
+    } finally {
+      setState(() {
+        isWaiting = false;
+      });
+    }
+  }
+
+    void logout() async {
+    // remove stored token
+    final storage = await SharedPreferences.getInstance();
+    await storage.remove('token');
+
+
+    if (!mounted) return;
+    // back to login, clear all history
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (route) => false,
+    );
+  }
+  
+  @override
+  void initState() {
+    super.initState();
+    getRooms();
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -44,7 +133,7 @@ class _UserState extends State<User> {
               Row(
                 children: [
                   Text(
-                    userName,
+                    username,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
@@ -82,7 +171,7 @@ class _UserState extends State<User> {
         body: TabBarView(
           children: [
             // home
-            HomeTab(userName: userName),
+            HomeTab(userName: username),
             // status
             StatusTab(),
             // history

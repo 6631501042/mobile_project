@@ -135,7 +135,7 @@ class BaseBrowseScreen extends StatefulWidget {
               ),
             ),
             child: const Text(
-              '28 March 2024',
+              '28 March 2025',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),

@@ -1,130 +1,209 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_project/user/login.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class Register extends StatelessWidget {
+class Register extends StatefulWidget {
   const Register({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController username = TextEditingController();
-    final TextEditingController password = TextEditingController();
-    final TextEditingController confirm_password = TextEditingController();
-    final TextEditingController email = TextEditingController();
+  State<Register> createState() => _RegisterState();
+}
 
+class _RegisterState extends State<Register> {
+  final url = '192.168.50.51:3000';
+  bool isWaiting = false;
+
+  final TextEditingController username = TextEditingController();
+  final TextEditingController password = TextEditingController();
+  final TextEditingController confirmPassword = TextEditingController();
+
+  void popDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Message'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Register account
+  Future<void> addAccount() async {
+    if (username.text.isEmpty ||
+        password.text.isEmpty ||
+        confirmPassword.text.isEmpty) {
+      popDialog('Please fill in all fields');
+      return;
+    }
+    if (password.text != confirmPassword.text) {
+      popDialog('Passwords do not match');
+      return;
+    }
+
+    setState(() {
+      isWaiting = true;
+    });
+
+    try {
+      Uri uri = Uri.http(url, '/api/student/register');
+      Map<String, dynamic> body = {
+        'username': username.text.trim(),
+        'password': password.text.trim(),
+      };
+
+      http.Response response = await http
+          .post(
+            uri,
+            body: jsonEncode(body),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        popDialog('Account created successfully!');
+        await Future.delayed(const Duration(seconds: 1));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Login()),
+        );
+      } else {
+        popDialog(response.body);
+      }
+    } on TimeoutException {
+      popDialog('Connection timeout. Please try again.');
+    } catch (e) {
+      debugPrint(e.toString());
+      popDialog('Unexpected error. Please try again.');
+    } finally {
+      setState(() {
+        isWaiting = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    username.dispose();
+    password.dispose();
+    confirmPassword.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFD8C38A),
+      backgroundColor: const Color(0xFFD8C38A),
       body: Center(
         child: Container(
           width: 300,
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset('assets/images/bird.png', height: 80),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-              // Title
-              Text(
+              const Text(
                 'Room Reservation System',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 5),
-              Text('Register my account', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 20),
+              const SizedBox(height: 5),
+              const Text('Register my account'),
+              const SizedBox(height: 20),
 
               // Username
-              Align(
+              const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Enter your username'),
               ),
               TextField(
                 controller: username,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 10,
-                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                 ),
               ),
-              SizedBox(height: 10),
-
-              // Email
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Enter your email'),
-              ),
-              TextField(
-                controller: email,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 10,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
               // Password
-              Align(
+              const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Enter your password'),
               ),
               TextField(
                 controller: password,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 10,
-                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 10),
 
               // Confirm Password
-              Align(
+              const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Confirm your password'),
               ),
               TextField(
-                controller: confirm_password,
+                controller: confirmPassword,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 10,
-                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 30),
 
-              // Sign up Button
+              // Sign Up Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF4E5B4C),
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    backgroundColor: const Color(0xFF4E5B4C),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: Color(0xFF4E5B4C)),
+                      side: const BorderSide(color: Color(0xFF4E5B4C)),
                     ),
                   ),
-                  onPressed: () {},
-                  child: Text('Sign Up', style: TextStyle(color: Colors.white)),
+                  onPressed: isWaiting ? null : addAccount,
+                  child: isWaiting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Sign Up',
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-              // Create new
+              // Cancel Button
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -132,11 +211,11 @@ class Register extends StatelessWidget {
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.white70,
                       foregroundColor: Colors.redAccent,
-                      side: BorderSide(color: Colors.redAccent),
+                      side: const BorderSide(color: Colors.redAccent),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
@@ -144,10 +223,10 @@ class Register extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const Login()),
+                        MaterialPageRoute(builder: (_) => const Login()),
                       );
                     },
-                    child: Text('Cancel'),
+                    child: const Text('Cancel'),
                   ),
                 ],
               ),
