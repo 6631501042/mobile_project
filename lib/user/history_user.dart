@@ -1,175 +1,244 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-// ================== PAGE: HISTORY USER ==================
-class HistoryUserPage extends StatelessWidget {
+class HistoryUserPage extends StatefulWidget {
   const HistoryUserPage({super.key});
 
-  List<HistoryItem> _mockData() {
-    return [
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "28 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "MR-104",
-        date: "24 Sep 2025",
-        time: "15.00-17.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "SR-101",
-        date: "20 Sep 2025",
-        time: "10.00-12.00",
-        status: "Approved",
-        approverName: "Ajarn.Tock",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "SR-106",
-        date: "10 Sep 2025",
-        time: "13.00-15.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tock",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "9 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "8 Sep 2025",
-        time: "8.00-10.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "7 Sep 2025",
-        time: "8.00-10.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "6 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "5 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-    ];
+  @override
+  State<HistoryUserPage> createState() => _HistoryUserPageState();
+}
+
+class _HistoryUserPageState extends State<HistoryUserPage> {
+  // ✅ Use 10.0.2.2 for Android emulator; use your PC LAN IP for real device
+  static const String baseUrl = 'http://10.0.2.2:3000';
+
+  late Future<_HistoryResponse> _future;
+
+  bool _isTestLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetchHistory();
+    _loadLoginState(); //test login
+  }
+
+  Future<void> _loadLoginState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isTestLoggedIn = prefs.getInt('role_id') != null;
+    });
+  }
+
+  /// Toggle “phoom” login on/off
+  Future<void> _setTestLogin(bool on) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (on) {
+      await prefs.setInt('role_id', 24);
+      await prefs.setString('username', 'phoom');
+      await prefs.setString('role', 'student');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Logged in as phoom')),
+      );
+    } else {
+      await prefs.remove('role_id');
+      await prefs.remove('username');
+      await prefs.remove('role');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🚪 Logged out')),
+      );
+    }
+
+    setState(() {
+      _isTestLoggedIn = on;
+      _future = _fetchHistory(); // refresh list after toggle
+    });
+  }
+//-------------------------------------------------------
+
+  Future<_HistoryResponse> _fetchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final roleId = prefs.getInt('role_id');
+    final username = prefs.getString('username');
+
+    if (roleId == null) {
+      // no login info yet
+      return _HistoryResponse(
+          items: const [], username: username ?? '—', roleIdText: '—');
+    }
+
+    final url = Uri.parse('$baseUrl/api/student/history/$roleId');
+    final res = await http.get(url);
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load history: ${res.statusCode} ${res.body}');
+    }
+
+    final List<dynamic> jsonList = json.decode(res.body);
+    final items = jsonList
+        .map((e) => HistoryItem(
+              reqIdAndUser: (e['reqIdAndUser'] ?? '').toString(),
+              roomCode: (e['roomCode'] ?? '').toString(),
+              date: (e['date'] ?? '').toString(),
+              time: (e['time'] ?? '').toString(),
+              status: (e['status'] ?? '').toString(),
+              approverName: (e['approverName'] ?? '').toString(),
+              rejectReason:
+                  (e['rejectReason'] as String?)?.trim().isEmpty == true
+                      ? null
+                      : e['rejectReason'],
+            ))
+        .toList();
+
+    return _HistoryResponse(
+      items: items,
+      username: username ?? '—',
+      roleIdText: roleId.toString(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final dataList = _mockData();
+    return FutureBuilder<_HistoryResponse>(
+      future: _future, // ✅ use the field, not _fetchHistory()
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            color: const Color(0xFFE6D5A9),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TopBar(titleRightText: "6E3510/xxx"),
+        String topRight = "—";
+        List<HistoryItem> dataList = const [];
 
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Center(
-                        child: Text(
-                          "History User",
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      Row(
+        if (snap.hasError) {
+          topRight = "Error";
+        } else if (snap.hasData) {
+          topRight = snap.data!.username.isNotEmpty
+              ? snap.data!.username
+              : snap.data!.roleIdText;
+          dataList = snap.data!.items;
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(
+            child: Center(
+              child: Container(
+                width: 360,
+                color: const Color(0xFFE6D5A9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TopBar(titleRightText: topRight),
+
+                    // 🧪 Test button: saves prefs and forces refetch
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(
+                          const Text(
+                            'Test login (phoom)',
+                            style: TextStyle(fontSize: 14, color: Colors.black),
+                          ),
+                          const SizedBox(width: 8),
+                          Switch.adaptive(
+                            value: _isTestLoggedIn,
+                            onChanged: (val) => _setTestLogin(val),
+                          ),
+                        ],
+                      ),
+                    ),
+                    //-----------------------------------------------------------
+
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
                             child: Text(
-                              "Room",
+                              "History User",
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: 30,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black,
                               ),
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            "Action",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
+                          SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Room",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Action",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 8,
                     ),
-                    itemCount: dataList.length,
-                    itemBuilder: (context, index) {
-                      final item = dataList[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: HistoryCardUser(item: item),
-                      );
-                    },
-                  ),
-                ),
 
-                const BottomNavBar(),
-              ],
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 8,
+                        ),
+                        itemCount: dataList.length,
+                        itemBuilder: (context, index) {
+                          final item = dataList[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: HistoryCardUser(
+                              item: item,
+                            ), // your original card
+                          );
+                        },
+                      ),
+                    ),
+
+                    const BottomNavBar(),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
+
+class _HistoryResponse {
+  final List<HistoryItem> items;
+  final String username;
+  final String roleIdText;
+  _HistoryResponse({
+    required this.items,
+    required this.username,
+    required this.roleIdText,
+  });
 }
 
 // ================== DATA MODEL ==================
@@ -329,8 +398,10 @@ class HistoryCardUser extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(4),
@@ -382,10 +453,7 @@ class HistoryCardUser extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 item.rejectReason ?? "No reason provided",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
                 softWrap: true,
                 overflow: TextOverflow.visible,
               ),
