@@ -43,10 +43,10 @@ class _LoginState extends State<Login> {
 
   // Login function
   void login() async {
-    // if (username.text.isEmpty || password.text.isEmpty) {
-    //   popDialog('Please enter username and password');
-    //   return;
-    // }
+    if (username.text.isEmpty || password.text.isEmpty) {
+      popDialog('Please enter username and password');
+      return;
+    }
 
     setState(() {
       isWaiting = true;

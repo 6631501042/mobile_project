@@ -40,7 +40,7 @@ class _StaffState extends State<Staff> {
                   ),
                 ],
               ),
-              // staff name / logout button
+              // staff name
               Row(
                 children: [
                   Text(
@@ -48,6 +48,7 @@ class _StaffState extends State<Staff> {
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
+                  // logout button
                   TextButton(
                     onPressed: () {
                       Navigator.pushReplacement(

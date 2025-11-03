@@ -56,7 +56,7 @@ class _UserState extends State<User> {
 
     // get all rooms
     try {
-      Uri uri = Uri.http(url, '/api/student/rooms');
+      Uri uri = Uri.http(url, '/api/student/rooms/:roomID');
       http.Response response = await http
           .get(uri)
           .timeout(const Duration(seconds: 10));
@@ -129,7 +129,7 @@ class _UserState extends State<User> {
                   ),
                 ],
               ),
-              // user name / logout button
+              // user name
               Row(
                 children: [
                   Text(
@@ -137,6 +137,7 @@ class _UserState extends State<User> {
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
+                  // logout button
                   TextButton(
                     onPressed: () {
                       Navigator.pushReplacement(
@@ -176,8 +177,6 @@ class _UserState extends State<User> {
             StatusTab(),
             // history
             HistoryTab(),
-            // dashboard
-            DashboardTab(),
           ],
         ),
         bottomNavigationBar: Container(
@@ -190,7 +189,6 @@ class _UserState extends State<User> {
               Tab(icon: Icon(Icons.home), text: 'Home'),
               Tab(icon: Icon(Icons.star), text: 'Status'),
               Tab(icon: Icon(Icons.schedule), text: 'History'),
-              Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
             ],
           ),
         ),
@@ -797,89 +795,6 @@ class HistoryCardUser extends StatelessWidget {
           fontSize: 16,
           fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
           color: Colors.black,
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================
-// dashboard
-// ==========================
-class DashboardTab extends StatelessWidget {
-  const DashboardTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          const SizedBox(height: 30),
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            '20',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              crossAxisSpacing: 5,
-              mainAxisSpacing: 5,
-              children: [
-                _card(
-                  'assets/images/free.png',
-                  'Free Slots',
-                  '5',
-                  Colors.greenAccent[100]!,
-                ),
-                _card(
-                  'assets/images/pending.png',
-                  'Pending Slots',
-                  '5',
-                  Colors.amberAccent[100]!,
-                ),
-                _card(
-                  'assets/images/reserve.png',
-                  'Reserved Slots',
-                  '7',
-                  Colors.blueAccent[100]!,
-                ),
-                _card(
-                  'assets/images/disable.png',
-                  'Disabled Rooms',
-                  '3',
-                  Colors.redAccent[100]!,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _card(String img, String title, String value, Color color) {
-    return Card(
-      color: color,
-      elevation: 4,
-      child: InkWell(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(img, height: 60, fit: BoxFit.cover),
-              const SizedBox(height: 10),
-              Text(title, style: const TextStyle(fontSize: 16)),
-              Text(value, style: const TextStyle(fontSize: 16)),
-            ],
-          ),
         ),
       ),
     );
