@@ -506,7 +506,7 @@ class _Card extends StatelessWidget {
   final Future<void> Function() onApprove;
   final Future<void> Function(String reason) onReject;
   const _Card({
-    super.key,
+    // super.key,
     required this.r,
     required this.onApprove,
     required this.onReject,
