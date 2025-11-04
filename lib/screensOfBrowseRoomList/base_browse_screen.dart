@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../modelsData/room_data.dart';
+import '../services/api_service.dart';
 
 class BaseBrowseScreen extends StatefulWidget {
   final UserRole userRole;
   final String userName;
-  final Widget? actionButtons; // ปุ่ม Add/Edit / Reserve / Approve-Reject
+  final Widget? actionButtons;
   final void Function(RoomSlot)? onSlotSelected;
 
   const BaseBrowseScreen({
@@ -21,34 +22,41 @@ class BaseBrowseScreen extends StatefulWidget {
 
 class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   RoomSlot? _selectedSlot;
-  String _searchQuery = ''; // 🚀 1. สถานะสำหรับเก็บข้อความค้นหา
+  String _searchQuery = '';
 
-  // ข้อมูลจำลองเดิม
-  static final List<RoomSlot> _roomSlots = [
-    RoomSlot(no: 1, room: 'LR-101', timeSlots: '8:00-10:00', status: 'Reserved'),
-    RoomSlot(no: 2, room: 'LR-101', timeSlots: '10:00-12:00', status: 'Pending'),
-    RoomSlot(no: 3, room: 'LR-101', timeSlots: '13:00-15:00', status: 'Free'),
-    RoomSlot(no: 4, room: 'LR-101', timeSlots: '15:00-17:00', status: 'Free'),
-    RoomSlot(no: 5, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Disabled'),
-    RoomSlot(no: 6, room: 'LR-102', timeSlots: '8:00-12:00', status: 'Disabled'),
-    RoomSlot(no: 7, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Request'),
-  ];
+  List<RoomSlot> _all = [];
+  bool _loading = true;
+  String _error = '';
 
-  // กำหนดสี
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
 
-  // 🚀 2. Getter สำหรับกรองข้อมูลตามคำค้นหา
-  List<RoomSlot> get _filterRoomSlots {
-    if (_searchQuery.isEmpty) {
-      return _roomSlots;
+  @override
+  void initState() {
+    super.initState();
+    _fetchRooms();
+  }
+
+  Future<void> _fetchRooms() async {
+    setState(() { _loading = true; _error = ''; });
+    try {
+      final list = await ApiService.getRooms();
+      _all = list.map((e) => RoomSlot.fromJson(e)).toList();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      if (mounted) setState(() { _loading = false; });
     }
-    final query = _searchQuery.toLowerCase();
-    return _roomSlots.where((slot) {
-      return slot.room.toLowerCase().contains(query) ||
-             slot.status.toLowerCase().contains(query) ||
-             slot.timeSlots.toLowerCase().contains(query);
-    }).toList();
+  }
+
+  List<RoomSlot> get _filterRoomSlots {
+    if (_searchQuery.isEmpty) return _all;
+    final q = _searchQuery.toLowerCase();
+    return _all.where((s) =>
+      s.room.toLowerCase().contains(q) ||
+      s.status.toLowerCase().contains(q) ||
+      s.timeSlots.toLowerCase().contains(q),
+    ).toList();
   }
 
   @override
@@ -57,27 +65,26 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(top: 8.0, bottom: 8.0, left: 16.0),
-          child: Text(
-            'Browse room list',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
+          padding: EdgeInsets.only(top: 8, bottom: 8, left: 16),
+          child: Text('Browse room list', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
         ),
-        // 🚀 เพิ่มช่องค้นหา
         _buildSearchBar(),
-        
         _buildRoomTypeCards(),
-        
-        Expanded(child: _buildRoomListTable()),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error.isNotEmpty
+                ? Center(child: Text('Error: $_error'))
+                : _buildRoomListTable(),
+        ),
         if (widget.actionButtons != null) widget.actionButtons!,
       ],
     );
   }
 
-  // 🚀 3. ฟังก์ชันสำหรับสร้างช่องค้นหา
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search room name or status...',
@@ -85,36 +92,22 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
           prefixIcon: const Icon(Icons.search, color: Colors.black54),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none,
-          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
           focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8.0)),
-            borderSide: BorderSide(color: Color(0xFF6A994E), width: 2.0),
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+            borderSide: BorderSide(color: Color(0xFF6A994E), width: 2),
           ),
         ),
-        onChanged: (value) {
-          // 🚀 เรียก setState เพื่ออัปเดต UI เมื่อมีการค้นหา
-          setState(() {
-            _searchQuery = value;
-            _selectedSlot = null; // ยกเลิกการเลือกแถวเมื่อค้นหาใหม่
-          });
-        },
+        onChanged: (v) => setState(() { _searchQuery = v; _selectedSlot = null; }),
       ),
     );
   }
 
-  // --- Widgets ย่อยที่ใช้ร่วมกัน ---
-
   Widget _buildRoomTypeCards() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -131,26 +124,16 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   Widget _buildRoomCard(String title, String subtitle) {
     return Expanded(
       child: SizedBox(
-        height: 85.0,
+        height: 85,
         child: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _cardColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
+          decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(8)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-              ),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
               const Spacer(),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.white70, fontSize: 10),
-              ),
+              Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 10)),
             ],
           ),
         ),
@@ -160,83 +143,35 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
 
   Widget _buildRoomListTable() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: _tableHeaderColor.withOpacity(0.7),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
             ),
-            child: const Text(
-              '28 March 2024',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
+            child: const Text('Today', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: const BoxDecoration(color: _tableHeaderColor),
             child: const Row(
               children: [
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'No.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Room',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Time slots',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Status',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                Expanded(flex: 1, child: Text('No.',       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(flex: 2, child: Text('Room',      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(flex: 2, child: Text('Time slots',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(flex: 2, child: Text('Status',    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
               ],
             ),
           ),
           Expanded(
             child: ListView.builder(
-              // 🚀 ใช้ _filterRoomSlots แทน _roomSlots
               itemCount: _filterRoomSlots.length,
-              itemBuilder: (context, index) {
-                return _buildTableRow(_filterRoomSlots[index], index);
-              },
+              itemBuilder: (_, i) => _buildTableRow(_filterRoomSlots[i]),
             ),
           ),
         ],
@@ -244,25 +179,18 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
     );
   }
 
-  Widget _buildTableRow(RoomSlot slot, int index) {
-    bool isSelected = _selectedSlot == slot;
-
+  Widget _buildTableRow(RoomSlot slot) {
+    final isSelected = _selectedSlot == slot;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedSlot = slot;
-        });
-        if (widget.onSlotSelected != null) {
-          widget.onSlotSelected!(slot);
-        }
+        setState(() => _selectedSlot = slot);
+        widget.onSlotSelected?.call(slot);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? Colors.amber.withOpacity(0.3) : Colors.transparent,
-          border: const Border(
-            bottom: BorderSide(color: Colors.black12, width: 0.5),
-          ),
+          border: const Border(bottom: BorderSide(color: Colors.black12, width: 0.5)),
         ),
         child: Row(
           children: [
@@ -275,14 +203,8 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                 alignment: Alignment.centerLeft,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: slot.statusColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    slot.status,
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
+                  decoration: BoxDecoration(color: slot.statusColor, borderRadius: BorderRadius.circular(4)),
+                  child: Text(slot.status, style: const TextStyle(color: Colors.white, fontSize: 12)),
                 ),
               ),
             ),
