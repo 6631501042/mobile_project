@@ -103,7 +103,7 @@ class _StaffState extends State<Staff> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xFFD8C38A),
+        backgroundColor: const Color(0xFFE6D5A9),
         // appbar
         appBar: AppBar(
           backgroundColor: const Color(0xFF476C5E),
