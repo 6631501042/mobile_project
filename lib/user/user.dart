@@ -538,15 +538,13 @@ class _HistoryTabState extends State<HistoryTab> {
           );
         }
 
-        String topRight = "—";
+        // String topRight = "—";
         List<HistoryItem> dataList = const [];
 
-        if (snap.hasError) {
-          topRight = "Error";
-        } else if (snap.hasData) {
-          topRight = snap.data!.username.isNotEmpty
-              ? snap.data!.username
-              : snap.data!.roleIdText;
+        if (snap.hasData) {
+          // topRight = snap.data!.username.isNotEmpty
+              // ? snap.data!.username
+              // : snap.data!.roleIdText;
           dataList = snap.data!.items;
         }
 
