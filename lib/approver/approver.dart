@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_project/user/login.dart';
 import '../modelsData/room_data.dart';
 import '../screensOfBrowseRoomList/base_browse_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Approver extends StatefulWidget {
   const Approver({super.key});
@@ -12,7 +15,88 @@ class Approver extends StatefulWidget {
 }
 
 class _ApproverState extends State<Approver> {
-  final String userName = 'Ajarn.Tick';
+  final url = '192.168.50.51:3000';
+  bool isWaiting = false;
+  String username = '';
+  List? rooms;
+
+  void popDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(title: const Text('Error'), content: Text(message));
+      },
+    );
+  }
+
+  void getRooms() async {
+    // get token from local storage
+    final storage = await SharedPreferences.getInstance();
+    String? token = storage.getString('token');
+    if (token == null) {
+      if (!mounted) return;
+      // return to login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (BuildContext context) => const Login()),
+      );
+      return;
+    }
+    // decode token to get user info
+    final user = jsonDecode(token);
+
+    setState(() {
+      isWaiting = true;
+      username = user['username'];
+    });
+
+    // get all rooms
+    try {
+      Uri uri = Uri.http(url, '/api/role/rooms/:roomID');
+      http.Response response = await http
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
+      // check server's response
+      if (response.statusCode == 200) {
+        rooms = jsonDecode(response.body);
+      } else {
+        popDialog(response.body);
+      }
+    } on TimeoutException catch (e) {
+      debugPrint(e.message);
+      if (!mounted) return;
+      popDialog('Timeout error, try again!');
+    } catch (e) {
+      debugPrint(e.toString());
+      if (!mounted) return;
+      popDialog('Unknown error, try again!');
+    } finally {
+      setState(() {
+        isWaiting = false;
+      });
+    }
+  }
+
+    void logout() async {
+    // remove stored token
+    final storage = await SharedPreferences.getInstance();
+    await storage.remove('token');
+
+    if (!mounted) return;
+    // back to login, clear all history
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (route) => false,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getRooms();
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -44,7 +128,7 @@ class _ApproverState extends State<Approver> {
               Row(
                 children: [
                   Text(
-                    userName,
+                    username,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
@@ -82,7 +166,7 @@ class _ApproverState extends State<Approver> {
         body: TabBarView(
           children: [
             // home
-            HomeTab(userName: userName),
+            HomeTab(userName: username),
             // status
             StatusTab(),
             // history
@@ -316,12 +400,11 @@ class _ApproverPageState extends State<ApproverPage> {
           child: Column(
             children: [
               // เติมระยะบน ~ เท่า AppBar เดิม เพื่อไม่ให้ตำแหน่งเลื่อน
-              const SizedBox(height: 76),
 
               const Center(
                 child: Text(
                   'Status',
-                  style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 35, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 18),
@@ -889,61 +972,120 @@ class HistoryCardApprover extends StatelessWidget {
 // ==========================
 // dashboard
 // ==========================
-class DashboardTab extends StatelessWidget {
+class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
 
   @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
+  final String url = '192.168.50.51:3000';
+  bool isLoading = true;
+  int free = 0;
+  int pending = 0;
+  int reserved = 0;
+  int disable = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSummary();
+    // auto refresh every 10 sec
+    Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) fetchSummary();
+    });
+  }
+
+  Future<void> fetchSummary() async {
+    try {
+      Uri uri = Uri.http(url, '/api/rooms/status');
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          free = int.tryParse(data['free'].toString()) ?? 0;
+          pending = int.tryParse(data['pending'].toString()) ?? 0;
+          reserved = int.tryParse(data['reserved'].toString()) ?? 0;
+          disable = int.tryParse(data['disable'].toString()) ?? 0;
+          isLoading = false;
+        });
+      } else {
+        debugPrint("Server error: ${response.statusCode}");
+      }
+    } on TimeoutException {
+      debugPrint("Timeout - server not responding");
+    } catch (e) {
+      debugPrint("Error fetching summary: $e");
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          const SizedBox(height: 30),
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            '20',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              crossAxisSpacing: 5,
-              mainAxisSpacing: 5,
-              children: [
-                _card(
-                  'assets/images/free.png',
-                  'Free Slots',
-                  '5',
-                  Colors.greenAccent[100]!,
-                ),
-                _card(
-                  'assets/images/pending.png',
-                  'Pending Slots',
-                  '5',
-                  Colors.amberAccent[100]!,
-                ),
-                _card(
-                  'assets/images/reserve.png',
-                  'Reserved Slots',
-                  '7',
-                  Colors.blueAccent[100]!,
-                ),
-                _card(
-                  'assets/images/disable.png',
-                  'Disabled Rooms',
-                  '3',
-                  Colors.redAccent[100]!,
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Scaffold(
+      backgroundColor: const Color(0xFFE6D5A9),
+      body: Center(
+        child: isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Column(
+                children: [
+                  const SizedBox(height: 30),
+                  const Text(
+                    'Dashboard',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3E3B31),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${free + pending + reserved + disable}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3E3B31),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      children: [
+                        _card(
+                          'assets/images/free.png',
+                          'Free Slots',
+                          '$free',
+                          const Color(0xFFA8E6CF), // green mint
+                        ),
+                        _card(
+                          'assets/images/pending.png',
+                          'Pending Slots',
+                          '$pending',
+                          const Color(0xFFFFF59D), // soft yellow
+                        ),
+                        _card(
+                          'assets/images/reserve.png',
+                          'Reserved Slots',
+                          '$reserved',
+                          const Color(0xFF81D4FA), // light blue
+                        ),
+                        _card(
+                          'assets/images/disable.png',
+                          'Disabled Rooms',
+                          '$disable',
+                          const Color(0xFFEF9A9A), // soft red
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -951,16 +1093,34 @@ class DashboardTab extends StatelessWidget {
   Widget _card(String img, String title, String value, Color color) {
     return Card(
       color: color,
-      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 6,
+      shadowColor: Colors.black26,
       child: InkWell(
+        onTap: () => fetchSummary(), // tap to refresh
+        borderRadius: BorderRadius.circular(12),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(img, height: 60, fit: BoxFit.cover),
               const SizedBox(height: 10),
-              Text(title, style: const TextStyle(fontSize: 16)),
-              Text(value, style: const TextStyle(fontSize: 16)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ],
           ),
         ),
