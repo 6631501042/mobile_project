@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../modelsData/room_data.dart';
 import '../screensOfBrowseRoomList/base_browse_screen.dart';
 import '../services/api_service.dart';
-import 'request_form.dart';
+import 'package:mobile_project/user/request_form.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_project/user/login.dart';
 
 class User extends StatefulWidget {
   const User({super.key});
@@ -12,7 +16,75 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
-  final String userName = 'User001';
+  bool isWaiting = false;
+  String username = '';
+  List? rooms;
+  void popDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(title: const Text('Error'), content: Text(message));
+      },
+    );
+  }
+
+  void getRooms() async {
+    // get token from local storage
+    final storage = await SharedPreferences.getInstance();
+    String? token = storage.getString('token');
+    if (token == null) {
+      if (!mounted) return;
+      // return to login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (BuildContext context) => const Login()),
+      );
+      return;
+    }
+    // decode token to get user info
+
+    setState(() {
+      isWaiting = true;
+      username = storage.getString('username') ?? '';
+    });
+
+    await Future.delayed(const Duration(milliseconds: 300)); // เผื่อเวลาสั้นๆ
+    setState(() {
+      isWaiting = false;
+    });
+    try {
+      final result = await ApiService.getRooms();
+      setState(() {
+        rooms = result;
+      });
+    } catch (e) {
+      popDialog('Failed to load rooms: $e');
+    } finally {
+      setState(() {
+        isWaiting = false;
+      });
+    }
+  }
+
+  void logout() async {
+    // remove stored token
+    final storage = await SharedPreferences.getInstance();
+    await storage.remove('token');
+
+    if (!mounted) return;
+    // back to login, clear all history
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+      (route) => false,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getRooms();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,26 +113,37 @@ class _UserState extends State<User> {
               ),
               Row(
                 children: [
-                  Text(userName, style: const TextStyle(fontSize: 12, color: Colors.white)),
+                  Text(
+                    username,
+                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                  ),
                   const SizedBox(width: 10),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: logout,
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.redAccent,
                       side: const BorderSide(color: Colors.white),
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    child: const Text('LOGOUT', style: TextStyle(fontSize: 12, color: Colors.white)),
+                    child: const Text(
+                      'LOGOUT',
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                    ),
                   ),
                 ],
               ),
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
-            HomeTab(userName: 'User001'),
+            HomeTab(userName: username),
             StatusTab(),
             HistoryTab(),
           ],
@@ -159,17 +242,21 @@ class _StatusTabState extends State<StatusTab> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return ListView(children: [
-              const SizedBox(height: 80),
-              Center(child: Text('Error: ${snap.error}')),
-            ]);
+            return ListView(
+              children: [
+                const SizedBox(height: 80),
+                Center(child: Text('Error: ${snap.error}')),
+              ],
+            );
           }
           final items = snap.data ?? [];
           if (items.isEmpty) {
-            return ListView(children: const [
-              SizedBox(height: 80),
-              Center(child: Text('No reservations yet')),
-            ]);
+            return ListView(
+              children: const [
+                SizedBox(height: 80),
+                Center(child: Text('No reservations yet')),
+              ],
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -190,19 +277,31 @@ class _StatusTabState extends State<StatusTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(r.room, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text(
+                            r.room,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text('Timeslot: ${r.timeSlots}'),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: r.statusColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(r.status, style: const TextStyle(color: Colors.white)),
+                      child: Text(
+                        r.status,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -221,7 +320,10 @@ class HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('My Reservation History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+      child: Text(
+        'My Reservation History',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

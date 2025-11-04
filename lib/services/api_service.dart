@@ -1,11 +1,10 @@
-
 // lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
   /// iOS Simulator ใช้ 127.0.0.1
-  static const String base = 'http://127.0.0.1:3000';
+  static const String base = 'http://192.168.1.149:3000';
 
   static const _json = {'Content-Type': 'application/json'};
   static const _timeout = Duration(seconds: 10);
@@ -26,23 +25,14 @@ class ApiService {
 
   /// จองห้อง (ตั้งเป็น pending) ต้องส่ง roleId ของผู้ใช้
   static Future<void> reserveRoom(int roomId, int roleId) async {
-    final r = await http.put(
-      Uri.parse('$base/api/student/rooms/$roomId'),
-      headers: _json,
-      body: jsonEncode({'role_id': roleId}),
-    ).timeout(_timeout);
+    final r = await http
+        .put(
+          Uri.parse('$base/api/student/rooms/$roomId'),
+          headers: _json,
+          body: jsonEncode({'role_id': roleId}),
+        )
+        .timeout(_timeout);
     _throwIfNot200(r);
-  }
-
-  /// เข้าสู่ระบบ -> ได้ role_id, username, role
-  static Future<Map<String, dynamic>> login(String username, String password) async {
-    final r = await http.post(
-      Uri.parse('$base/api/login'),
-      headers: _json,
-      body: jsonEncode({'username': username, 'password': password}),
-    ).timeout(_timeout);
-    _throwIfNot200(r);
-    return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
   /// ประวัติการจองของฉัน

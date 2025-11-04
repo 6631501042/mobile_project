@@ -143,35 +143,83 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
 
   Widget _buildRoomListTable() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+      // 🛑 ปรับ Margin ด้านบนจาก all(16.0) เป็น fromLTRB(16.0, 8.0, 16.0, 16.0) เพื่อให้ List Table เลื่อนขึ้น
+      margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: _tableHeaderColor.withOpacity(0.7),
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
             ),
-            child: const Text('Today', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            child: const Text(
+              '28 March 2024',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
             decoration: const BoxDecoration(color: _tableHeaderColor),
             child: const Row(
               children: [
-                Expanded(flex: 1, child: Text('No.',       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                Expanded(flex: 2, child: Text('Room',      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                Expanded(flex: 2, child: Text('Time slots',style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                Expanded(flex: 2, child: Text('Status',    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'No.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Room',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Time slots',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ), // Flex 2 เพื่อแก้ปัญหาล้นจอ
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Status',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           Expanded(
             child: ListView.builder(
               itemCount: _filterRoomSlots.length,
-              itemBuilder: (_, i) => _buildTableRow(_filterRoomSlots[i]),
+              itemBuilder: (context, index) {
+                return _buildTableRow(_filterRoomSlots[index], index);
+              },
             ),
           ),
         ],
@@ -179,36 +227,62 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
     );
   }
 
-  Widget _buildTableRow(RoomSlot slot) {
-    final isSelected = _selectedSlot == slot;
+  Widget _buildTableRow(RoomSlot slot, int index) {
+    bool isSelected = _selectedSlot == slot;
+
+    // 🚫 ปิดการคลิกถ้าห้องอยู่ในสถานะที่ไม่อนุญาต
+    bool isClickable =
+        !(slot.status == 'Pending' ||
+            slot.status == 'Reserved' ||
+            slot.status == 'Disabled');
+
     return GestureDetector(
-      onTap: () {
-        setState(() => _selectedSlot = slot);
-        widget.onSlotSelected?.call(slot);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.amber.withOpacity(0.3) : Colors.transparent,
-          border: const Border(bottom: BorderSide(color: Colors.black12, width: 0.5)),
-        ),
-        child: Row(
-          children: [
-            Expanded(flex: 1, child: Text('${slot.no}')),
-            Expanded(flex: 2, child: Text(slot.room)),
-            Expanded(flex: 2, child: Text(slot.timeSlots)),
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.centerLeft,
+      onTap: isClickable
+          ? () {
+              setState(() {
+                _selectedSlot = slot;
+              });
+              if (widget.onSlotSelected != null) {
+                widget.onSlotSelected!(slot);
+              }
+            }
+          : null, // ❌ ถ้าไม่อนุญาตให้คลิก, onTap จะเป็น null
+      child: Opacity(
+        opacity: isClickable ? 1.0 : 0.6, // ทำให้แถวที่คลิกไม่ได้ดูจางลง
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.amber.withOpacity(0.3)
+                : Colors.transparent,
+            border: const Border(
+              bottom: BorderSide(color: Colors.black12, width: 0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(flex: 1, child: Text('${slot.no}')),
+              Expanded(flex: 2, child: Text(slot.room)),
+              Expanded(flex: 2, child: Text(slot.timeSlots)),
+              Expanded(
+                flex: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: slot.statusColor, borderRadius: BorderRadius.circular(4)),
-                  child: Text(slot.status, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: slot.statusColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    slot.status,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
