@@ -53,9 +53,13 @@ class _LoginState extends State<Login> {
     });
 
     try {
-      Uri uri = Uri.http(url, '/api/login');
-      Map account = {'username': username.text, 'password': password.text};
-      http.Response response = await http
+      // ✅ Use a full base URL with scheme
+      const String baseUrl = 'http://172.19.192.1:3000';
+      final uri = Uri.parse('$baseUrl/api/login');
+
+      final account = {'username': username.text, 'password': password.text};
+
+      final res = await http
           .post(
             uri,
             body: jsonEncode(account),
@@ -63,37 +67,48 @@ class _LoginState extends State<Login> {
           )
           .timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        String token = response.body;
+      if (res.statusCode == 200) {
+        // ✅ Parse the payload your server returns: { role_id, username, role }
+        final data = jsonDecode(res.body);
 
-        // Save token locally
-        final storage = await SharedPreferences.getInstance();
-        await storage.setString('token', token);
-        final user = jsonDecode(response.body);
+        // ✅ SAVE TO SharedPreferences (THIS is the part you were missing)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('role_id', data['role_id']);
+        await prefs.setString('username', data['username']);
+        await prefs.setString('role', data['role']);
+        await prefs.setString('token', res.body); // optional but handy
+
+        // (optional) clear inputs
+        username.clear();
+        password.clear();
 
         if (!mounted) return;
 
-        // Navigate by role
-        if (user['role'] == 'student') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const User()),
-          );
-        } else if (user['role'] == 'staff') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const Staff()),
-          );
-        } else if (user['role'] == 'approver') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const Approver()),
-          );
-        } else {
-          popDialog('Unknown user role');
+        // ✅ Navigate by role (reads the same keys later in User/History)
+        switch (data['role']) {
+          case 'student':
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const User()),
+            );
+            break;
+          case 'staff':
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const Staff()),
+            );
+            break;
+          case 'approver':
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const Approver()),
+            );
+            break;
+          default:
+            popDialog('Unknown user role');
         }
       } else {
-        popDialog(response.body);
+        popDialog(res.body);
       }
     } on TimeoutException {
       popDialog('Connection timeout. Try again.');
@@ -101,9 +116,11 @@ class _LoginState extends State<Login> {
       debugPrint(e.toString());
       popDialog('Unexpected error. Please try again.');
     } finally {
-      setState(() {
-        isWaiting = false;
-      });
+      if (mounted) {
+        setState(() {
+          isWaiting = false;
+        });
+      }
     }
   }
 
