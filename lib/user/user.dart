@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../modelsData/room_data.dart'; 
+import '../modelsData/room_data.dart';
 import '../screensOfBrowseRoomList/base_browse_screen.dart'; // ต้อง import base_browse_screen
 import 'package:mobile_project/user/request_form.dart'; //มันคือ request form ของ user
+
 // คลาสหลักสำหรับหน้า User Role
 class User extends StatefulWidget {
   const User({super.key});
@@ -11,7 +12,7 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
-final String userName = 'User001'; // สมมติชื่อผู้ใช้
+  final String userName = 'User001'; // สมมติชื่อผู้ใช้
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -42,7 +43,7 @@ final String userName = 'User001'; // สมมติชื่อผู้ใช
               // staff name / logout button
               Row(
                 children: [
-                   Text(
+                  Text(
                     userName,
                     style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
@@ -80,7 +81,6 @@ final String userName = 'User001'; // สมมติชื่อผู้ใช
             StatusTab(),
             // history
             HistoryTab(),
-            
           ],
         ),
         bottomNavigationBar: Container(
@@ -113,7 +113,7 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  RoomSlot? selectedSlot; 
+  RoomSlot? selectedSlot;
 
   void _goToRequestForm(RoomSlot slot) {
     setState(() {
@@ -132,8 +132,11 @@ class _HomeTabState extends State<HomeTab> {
     // ถ้า selectedSlot != null แสดง RequestForm
     if (selectedSlot != null) {
       return RequestForm(
+        roomId: selectedSlot!.no, // ✅ ส่ง id แถวห้อง
         roomName: selectedSlot!.room,
         initialSlot: selectedSlot!.timeSlots,
+        isInitiallyFree:
+            (selectedSlot!.status == 'Free'), // ✅ อนุญาตกดต่อเมื่อ Free
         onCancel: _backToList,
       );
     }
@@ -147,7 +150,6 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 }
-
 
 // ==========================
 // 2. Status Tab
@@ -165,7 +167,6 @@ class StatusTab extends StatelessWidget {
     );
   }
 }
-
 
 // ==========================
 // 3. History Tab
