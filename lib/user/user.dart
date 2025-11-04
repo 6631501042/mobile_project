@@ -20,7 +20,6 @@ class _UserState extends State<User> {
   bool isWaiting = false;
   String username = '';
   List? rooms;
-  // final String userName = '6631501xxx';
 
   void popDialog(String message) {
     showDialog(
@@ -56,7 +55,7 @@ class _UserState extends State<User> {
 
     // get all rooms
     try {
-      Uri uri = Uri.http(url, '/api/student/rooms/:roomID');
+      Uri uri = Uri.http(url, '/api/role/rooms/:roomID');
       http.Response response = await http
           .get(uri)
           .timeout(const Duration(seconds: 10));
