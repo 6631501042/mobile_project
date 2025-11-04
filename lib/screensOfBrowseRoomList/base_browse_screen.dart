@@ -14,11 +14,14 @@ class BaseBrowseScreen extends StatefulWidget {
     this.actionButtons,
     this.onSlotSelected,
   });
-@override
+
+  @override
   State<BaseBrowseScreen> createState() => _BaseBrowseScreenState();
 }
-  class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
-  RoomSlot? _selectedSlot; // ✅ เก็บแถวที่ถูกเลือกไว้
+
+class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
+  RoomSlot? _selectedSlot;
+  String _searchQuery = ''; // 🚀 1. สถานะสำหรับเก็บข้อความค้นหา
 
   // ข้อมูลจำลองเดิม
   static final List<RoomSlot> _roomSlots = [
@@ -35,6 +38,19 @@ class BaseBrowseScreen extends StatefulWidget {
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
 
+  // 🚀 2. Getter สำหรับกรองข้อมูลตามคำค้นหา
+  List<RoomSlot> get _filterRoomSlots {
+    if (_searchQuery.isEmpty) {
+      return _roomSlots;
+    }
+    final query = _searchQuery.toLowerCase();
+    return _roomSlots.where((slot) {
+      return slot.room.toLowerCase().contains(query) ||
+             slot.status.toLowerCase().contains(query) ||
+             slot.timeSlots.toLowerCase().contains(query);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -47,12 +63,50 @@ class BaseBrowseScreen extends StatefulWidget {
             style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
           ),
         ),
+        // 🚀 เพิ่มช่องค้นหา
+        _buildSearchBar(),
+        
         _buildRoomTypeCards(),
-        // 🛑 ลบ _buildFilterRow() ออกตามความต้องการ
+        
         Expanded(child: _buildRoomListTable()),
         if (widget.actionButtons != null) widget.actionButtons!,
-
       ],
+    );
+  }
+
+  // 🚀 3. ฟังก์ชันสำหรับสร้างช่องค้นหา
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search room name or status...',
+          hintStyle: const TextStyle(color: Colors.black54),
+          prefixIcon: const Icon(Icons.search, color: Colors.black54),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8.0)),
+            borderSide: BorderSide(color: Color(0xFF6A994E), width: 2.0),
+          ),
+        ),
+        onChanged: (value) {
+          // 🚀 เรียก setState เพื่ออัปเดต UI เมื่อมีการค้นหา
+          setState(() {
+            _searchQuery = value;
+            _selectedSlot = null; // ยกเลิกการเลือกแถวเมื่อค้นหาใหม่
+          });
+        },
+      ),
     );
   }
 
@@ -76,11 +130,9 @@ class BaseBrowseScreen extends StatefulWidget {
 
   Widget _buildRoomCard(String title, String subtitle) {
     return Expanded(
-      // 🚀 แก้ไข: ใช้ SizedBox กำหนดความสูงที่แน่นอน (85.0) เพื่อให้ Card มีขนาดเท่ากันและเล็กลง
       child: SizedBox(
-        height: 85.0, // 👈 กำหนดความสูงคงที่เพื่อให้ Card มีขนาดเท่ากัน
+        height: 85.0,
         child: Container(
-          // 🚀 แก้ไข: ลด Padding ลงจาก 12 เป็น 8 เพื่อลดขนาดโดยรวม
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: _cardColor,
@@ -88,24 +140,16 @@ class BaseBrowseScreen extends StatefulWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            // 🚀 แก้ไข: ใช้ MainAxisAlignment.start และเพิ่ม Spacer
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ), // ลดขนาดฟอนต์เล็กน้อย
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
               ),
-              const Spacer(), // ใช้ Spacer เพื่อดันข้อความด้านล่างลงไป
+              const Spacer(),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 10,
-                ), // ลดขนาดฟอนต์เล็กน้อย
+                style: const TextStyle(color: Colors.white70, fontSize: 10),
               ),
             ],
           ),
@@ -116,7 +160,6 @@ class BaseBrowseScreen extends StatefulWidget {
 
   Widget _buildRoomListTable() {
     return Container(
-      // 🛑 ปรับ Margin ด้านบนจาก all(16.0) เป็น fromLTRB(16.0, 8.0, 16.0, 16.0) เพื่อให้ List Table เลื่อนขึ้น
       margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -173,7 +216,7 @@ class BaseBrowseScreen extends StatefulWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ), // Flex 2 เพื่อแก้ปัญหาล้นจอ
+                ),
                 Expanded(
                   flex: 2,
                   child: Text(
@@ -189,9 +232,10 @@ class BaseBrowseScreen extends StatefulWidget {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _roomSlots.length,
+              // 🚀 ใช้ _filterRoomSlots แทน _roomSlots
+              itemCount: _filterRoomSlots.length,
               itemBuilder: (context, index) {
-                return _buildTableRow(_roomSlots[index], index);
+                return _buildTableRow(_filterRoomSlots[index], index);
               },
             ),
           ),
@@ -200,7 +244,7 @@ class BaseBrowseScreen extends StatefulWidget {
     );
   }
 
-    Widget _buildTableRow(RoomSlot slot, int index) {
+  Widget _buildTableRow(RoomSlot slot, int index) {
     bool isSelected = _selectedSlot == slot;
 
     return GestureDetector(
@@ -227,15 +271,18 @@ class BaseBrowseScreen extends StatefulWidget {
             Expanded(flex: 2, child: Text(slot.timeSlots)),
             Expanded(
               flex: 2,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: slot.statusColor,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  slot.status,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: slot.statusColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    slot.status,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               ),
             ),
@@ -244,5 +291,4 @@ class BaseBrowseScreen extends StatefulWidget {
       ),
     );
   }
-
 }
