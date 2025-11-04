@@ -16,48 +16,11 @@ class _HistoryUserPageState extends State<HistoryUserPage> {
 
   late Future<_HistoryResponse> _future;
 
-  bool _isTestLoggedIn = false;
-
   @override
   void initState() {
     super.initState();
     _future = _fetchHistory();
-    _loadLoginState(); //test login
   }
-
-  Future<void> _loadLoginState() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isTestLoggedIn = prefs.getInt('role_id') != null;
-    });
-  }
-
-  /// Toggle “phoom” login on/off
-  Future<void> _setTestLogin(bool on) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    if (on) {
-      await prefs.setInt('role_id', 24);
-      await prefs.setString('username', 'phoom');
-      await prefs.setString('role', 'student');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Logged in as phoom')),
-      );
-    } else {
-      await prefs.remove('role_id');
-      await prefs.remove('username');
-      await prefs.remove('role');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🚪 Logged out')),
-      );
-    }
-
-    setState(() {
-      _isTestLoggedIn = on;
-      _future = _fetchHistory(); // refresh list after toggle
-    });
-  }
-//-------------------------------------------------------
 
   Future<_HistoryResponse> _fetchHistory() async {
     final prefs = await SharedPreferences.getInstance();
@@ -134,26 +97,6 @@ class _HistoryUserPageState extends State<HistoryUserPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TopBar(titleRightText: topRight),
-
-                    // 🧪 Test button: saves prefs and forces refetch
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Test login (phoom)',
-                            style: TextStyle(fontSize: 14, color: Colors.black),
-                          ),
-                          const SizedBox(width: 8),
-                          Switch.adaptive(
-                            value: _isTestLoggedIn,
-                            onChanged: (val) => _setTestLogin(val),
-                          ),
-                        ],
-                      ),
-                    ),
-                    //-----------------------------------------------------------
 
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
