@@ -16,7 +16,7 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
-  final url = '172.19.192.1:3000';
+  final url = '192.168.50.51:3000';
   bool isWaiting = false;
   String username = '';
   List? rooms;
@@ -479,7 +479,7 @@ class HistoryTab extends StatefulWidget {
 }
 
 class _HistoryTabState extends State<HistoryTab> {
-  static const String baseUrl = 'http://172.19.192.1:3000';
+  static const String baseUrl = 'http://192.168.50.51:3000';
 
   late Future<_HistoryResponse> _future;
 
