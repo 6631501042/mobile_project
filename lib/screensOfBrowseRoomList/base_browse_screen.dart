@@ -162,7 +162,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
               ),
             ),
             child: const Text(
-              '28 March 2024',
+              '6 November 2025',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
