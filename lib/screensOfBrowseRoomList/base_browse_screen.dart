@@ -107,7 +107,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
 
   Widget _buildRoomTypeCards() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

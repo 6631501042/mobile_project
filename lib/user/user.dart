@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_project/user/login.dart';
 import '../modelsData/room_data.dart';
 import '../screensOfBrowseRoomList/base_browse_screen.dart';
+import '../services/api_service.dart';
 import 'package:mobile_project/user/request_form.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,35 +45,27 @@ class _UserState extends State<User> {
       return;
     }
     // decode token to get user info
-    final user = jsonDecode(token);
+    // final user = jsonDecode(token);
 
 
     setState(() {
       isWaiting = true;
-      username = user['username'];
+      username = storage.getString('username') ?? '';
+      // username = user['username'];
     });
 
 
-    // get all rooms
+    await Future.delayed(const Duration(milliseconds: 300)); // เผื่อเวลาสั้นๆ
+    setState(() {
+      isWaiting = false;
+    });
     try {
-      Uri uri = Uri.http(url, '/api/role/rooms/:roomID');
-      http.Response response = await http
-          .get(uri)
-          .timeout(const Duration(seconds: 10));
-      // check server's response
-      if (response.statusCode == 200) {
-        rooms = jsonDecode(response.body);
-      } else {
-        popDialog(response.body);
-      }
-    } on TimeoutException catch (e) {
-      debugPrint(e.message);
-      if (!mounted) return;
-      popDialog('Timeout error, try again!');
+      final result = await ApiService.getRooms();
+      setState(() {
+        rooms = result;
+      });
     } catch (e) {
-      debugPrint(e.toString());
-      if (!mounted) return;
-      popDialog('Unknown error, try again!');
+      popDialog('Failed to load rooms: $e');
     } finally {
       setState(() {
         isWaiting = false;
@@ -210,30 +203,19 @@ class HomeTab extends StatefulWidget {
 class _HomeTabState extends State<HomeTab> {
   RoomSlot? selectedSlot;
 
-  void _goToRequestForm(RoomSlot slot) {
-    setState(() {
-      selectedSlot = slot;
-    });
-  }
-
-  void _backToList() {
-    setState(() {
-      selectedSlot = null;
-    });
-  }
+  void _goToRequestForm(RoomSlot slot) => setState(() => selectedSlot = slot);
+  void _backToList() => setState(() => selectedSlot = null);
 
   @override
   Widget build(BuildContext context) {
-    // ถ้า selectedSlot != null แสดง RequestForm
     if (selectedSlot != null) {
       return RequestForm(
+        roomId: selectedSlot!.no,
         roomName: selectedSlot!.room,
-        initialSlot: selectedSlot!.timeSlots,
+        initialSlot: selectedSlot!.timeSlots, // จาก DB เช่น "08.00-10.00"
         onCancel: _backToList,
       );
     }
-
-    // ถ้า selectedSlot == null แสดง BaseBrowseScreen
     return BaseBrowseScreen(
       userRole: UserRole.user,
       userName: widget.userName,
@@ -246,223 +228,115 @@ class _HomeTabState extends State<HomeTab> {
 // ==========================
 // status
 // ==========================
-
-/// ===== THEME COLORS =====
-class AppColors {
-  static const finlandia = Color(0xFF51624F); // Top bar
-  static const hampton = Color(0xFFE6D5A9); // Page background
-  static const norway = Color(0xFFAFBEA2); // Logo circle bg
-  static const edward = Color(0xFF9CB4AC); // Approved chip
-  static const chipPending = Color(0xFFFDFD96); // Pending chip // 0xFFFBFB3C
-  static const chipRejected = Color(0xFFFF9E9E); // Rejected chip
-}
-
-/// ===== MODEL =====
-enum BookingStatus { pending, approved, rejected }
-
-class UserReservation {
-  final String roomCode;
-  final DateTime date;
-  final TimeOfDay start;
-  final TimeOfDay end;
-  final BookingStatus status;
-
-  const UserReservation({
-    required this.roomCode,
-    required this.date,
-    required this.start,
-    required this.end,
-    required this.status,
-  });
-}
-
-/// ===== PAGE (USER) — Stateful =====
+// ========== Status (โหลดรายการจองของฉัน) ==========
 class StatusTab extends StatefulWidget {
   const StatusTab({super.key});
-
   @override
   State<StatusTab> createState() => _StatusTabState();
 }
 
 class _StatusTabState extends State<StatusTab> {
-  late UserReservation _todayItem;
+  late Future<List<RoomSlot>> _future;
 
   @override
   void initState() {
     super.initState();
-    _todayItem = UserReservation(
-      // <- เอา const ออก
-      roomCode: 'LR-104',
-      date: DateTime(2025, 9, 28),
-      start: const TimeOfDay(hour: 8, minute: 0),
-      end: const TimeOfDay(hour: 10, minute: 0),
-      status: BookingStatus.pending,
-    );
+    _future = _load();
+  }
+
+  Future<List<RoomSlot>> _load() async {
+    // ดึง role_id จาก SharedPreferences (ถ้ามี login)
+    // ถ้าไม่มี ให้ fallback เป็น 24 เช่นเดิม
+    final sp = await SharedPreferences.getInstance();
+    final roleId = sp.getInt('role_id') ?? 24;
+
+    final list = await ApiService.getMyHistory(roleId);
+    return list.map((e) => RoomSlot.fromJson(e)).toList();
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _future = _load());
+    await _future;
   }
 
   @override
   Widget build(BuildContext context) {
-    final item = _todayItem;
-
-    return Scaffold(
-      backgroundColor: AppColors.hampton,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              // Title
-              Text(
-                'Status',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black.withOpacity(0.92),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // White card
-              _ReservationCardUser(item: item),
-
-              const Spacer(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// ===== WHITE CARD (USER VIEW) =====
-class _ReservationCardUser extends StatelessWidget {
-  final UserReservation item;
-  const _ReservationCardUser({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final dateStr = '${_dd(item.date)} ${_mon(item.date)} ${item.date.year}';
-    String hhmm(TimeOfDay t) =>
-        '${t.hour.toString().padLeft(2, '0')}.${t.minute.toString().padLeft(2, '0')}';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0xFFF2EDD9),
-        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // LEFT
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: FutureBuilder<List<RoomSlot>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return ListView(
               children: [
-                Text(
-                  item.roomCode,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  dateStr,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${hhmm(item.start)}-${hhmm(item.end)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+                const SizedBox(height: 80),
+                Center(child: Text('Error: ${snap.error}')),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // RIGHT: status chip
-          _StatusChip(status: item.status),
-        ],
-      ),
-    );
-  }
-
-  String _dd(DateTime d) => d.day.toString().padLeft(2, '0');
-  String _mon(DateTime d) {
-    const m = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return m[d.month];
-  }
-}
-
-/// ===== STATUS CHIP =====
-class _StatusChip extends StatelessWidget {
-  final BookingStatus status;
-  const _StatusChip({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    late Color bg;
-    late Color border;
-    late String label;
-    switch (status) {
-      case BookingStatus.pending:
-        bg = AppColors.chipPending;
-        border = Color(0xFFA08A0D);
-        label = 'Pending';
-        break;
-      case BookingStatus.approved:
-        bg = AppColors.edward;
-        label = 'Approved';
-        break;
-      case BookingStatus.rejected:
-        bg = AppColors.chipRejected;
-        label = 'Rejected';
-        break;
-    }
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: border, width: 1.5),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 20,
-          color: Color(0xFFA08A0D),
-        ),
+            );
+          }
+          final items = snap.data ?? [];
+          if (items.isEmpty) {
+            return ListView(
+              children: const [
+                SizedBox(height: 80),
+                Center(child: Text('No reservations yet')),
+              ],
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, i) {
+              final r = items[i];
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r.room,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Timeslot: ${r.timeSlots}'),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: r.statusColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        r.status,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
