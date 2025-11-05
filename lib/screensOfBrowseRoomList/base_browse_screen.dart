@@ -15,6 +15,7 @@ class BaseBrowseScreen extends StatefulWidget {
     this.actionButtons,
     this.onSlotSelected,
   });
+
   @override
   State<BaseBrowseScreen> createState() => _BaseBrowseScreenState();
 }
@@ -27,40 +28,6 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   bool _loading = true;
   String _error = '';
 
-  RoomSlot? _selectedSlot; // ✅ เก็บแถวที่ถูกเลือกไว้
-
-  // ข้อมูลจำลองเดิม
-  static final List<RoomSlot> _roomSlots = [
-    RoomSlot(
-      no: 1,
-      room: 'LR-101',
-      timeSlots: '8:00-10:00',
-      status: 'Reserved',
-    ),
-    RoomSlot(
-      no: 2,
-      room: 'LR-101',
-      timeSlots: '10:00-12:00',
-      status: 'Pending',
-    ),
-    RoomSlot(no: 3, room: 'LR-101', timeSlots: '13:00-15:00', status: 'Free'),
-    RoomSlot(no: 4, room: 'LR-101', timeSlots: '15:00-17:00', status: 'Free'),
-    RoomSlot(
-      no: 5,
-      room: 'LR-102',
-      timeSlots: '8:00-10:00',
-      status: 'Disabled',
-    ),
-    RoomSlot(
-      no: 6,
-      room: 'LR-102',
-      timeSlots: '8:00-12:00',
-      status: 'Disabled',
-    ),
-    RoomSlot(no: 7, room: 'LR-102', timeSlots: '8:00-10:00', status: 'Free'),
-  ];
-
-  // กำหนดสี
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
 
@@ -112,7 +79,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
