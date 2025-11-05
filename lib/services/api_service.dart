@@ -38,7 +38,7 @@ class ApiService {
   /// ประวัติการจองของฉัน
   static Future<List<dynamic>> getMyHistory(int roleId) async {
     final r = await http
-        .get(Uri.parse('$base/api/student/history/$roleId'))
+        .get(Uri.parse('$base/api/student/status/$roleId'))
         .timeout(_timeout);
     _throwIfNot200(r);
     return jsonDecode(r.body) as List;

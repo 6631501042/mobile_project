@@ -236,9 +236,9 @@ class _LoginState extends State<Login> {
                       'Create new',
                       style: TextStyle(
                         color: Colors.blue,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.teal,
-                        decorationThickness: 2,
+                        // decoration: TextDecoration.underline,
+                        // decorationColor: Colors.teal,
+                        // decorationThickness: 2,
                       ),
                     ),
                   ),

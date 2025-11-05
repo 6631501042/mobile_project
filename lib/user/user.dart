@@ -31,7 +31,7 @@ class _UserState extends State<User> {
     );
   }
 
-    void getRooms() async {
+  void getRooms() async {
     // get token from local storage
     final storage = await SharedPreferences.getInstance();
     String? token = storage.getString('token');
@@ -47,13 +47,11 @@ class _UserState extends State<User> {
     // decode token to get user info
     // final user = jsonDecode(token);
 
-
     setState(() {
       isWaiting = true;
       username = storage.getString('username') ?? '';
       // username = user['username'];
     });
-
 
     await Future.delayed(const Duration(milliseconds: 300)); // เผื่อเวลาสั้นๆ
     setState(() {
@@ -73,11 +71,10 @@ class _UserState extends State<User> {
     }
   }
 
-    void logout() async {
+  void logout() async {
     // remove stored token
     final storage = await SharedPreferences.getInstance();
     await storage.remove('token');
-
 
     if (!mounted) return;
     // back to login, clear all history
@@ -87,7 +84,7 @@ class _UserState extends State<User> {
       (route) => false,
     );
   }
-  
+
   @override
   void initState() {
     super.initState();
@@ -282,7 +279,12 @@ class _StatusTabState extends State<StatusTab> {
             return ListView(
               children: const [
                 SizedBox(height: 80),
-                Center(child: Text('No reservations yet')),
+                Center(
+                  child: Text(
+                    'No reservations yet',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             );
           }
@@ -295,9 +297,16 @@ class _StatusTabState extends State<StatusTab> {
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Color(0xFFF2EDD9),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black12),
+                  border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      offset: Offset(0, 2),
+                      blurRadius: 3,
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -371,7 +380,10 @@ class _HistoryTabState extends State<HistoryTab> {
     if (roleId == null) {
       // no login info yet
       return _HistoryResponse(
-          items: const [], username: username ?? '—', roleIdText: '—');
+        items: const [],
+        username: username ?? '—',
+        roleIdText: '—',
+      );
     }
 
     final url = Uri.parse('$baseUrl/api/student/history/$roleId');
@@ -382,15 +394,19 @@ class _HistoryTabState extends State<HistoryTab> {
 
     final List<dynamic> jsonList = json.decode(res.body);
     final items = jsonList
-        .map((e) => HistoryItem(
-              reqIdAndUser: (e['reqIdAndUser'] ?? '').toString(),
-              roomCode: (e['roomCode'] ?? '').toString(),
-              date: (e['date'] ?? '').toString(),
-              time: (e['time'] ?? '').toString(),
-              status: (e['status'] ?? '').toString(),
-              approverName: (e['approverName'] ?? '').toString(),
-              rejectReason: ((e['rejectReason'] ?? '') as String).trim().isEmpty ? null : e['rejectReason'],
-            ))
+        .map(
+          (e) => HistoryItem(
+            reqIdAndUser: (e['reqIdAndUser'] ?? '').toString(),
+            roomCode: (e['roomCode'] ?? '').toString(),
+            date: (e['date'] ?? '').toString(),
+            time: (e['time'] ?? '').toString(),
+            status: (e['status'] ?? '').toString(),
+            approverName: (e['approverName'] ?? '').toString(),
+            rejectReason: ((e['rejectReason'] ?? '') as String).trim().isEmpty
+                ? null
+                : e['rejectReason'],
+          ),
+        )
         .toList();
 
     return _HistoryResponse(
@@ -417,8 +433,8 @@ class _HistoryTabState extends State<HistoryTab> {
 
         if (snap.hasData) {
           // topRight = snap.data!.username.isNotEmpty
-              // ? snap.data!.username
-              // : snap.data!.roleIdText;
+          // ? snap.data!.username
+          // : snap.data!.roleIdText;
           dataList = snap.data!.items;
         }
 
@@ -547,12 +563,15 @@ class HistoryCardUser extends StatelessWidget {
     final bool isApproved = item.status.toLowerCase() == "approved";
     final bool isRejected = item.status.toLowerCase() == "rejected";
 
-    final Color pillBg =
-        isApproved ? const Color(0xFFE4E9EE) : const Color(0xFFF4D6D5);
-    final Color pillBorder =
-        isApproved ? const Color(0xFF6D7A86) : const Color(0xFFB52125);
-    final Color pillText =
-        isApproved ? const Color(0xFF2D3A43) : const Color(0xFFB52125);
+    final Color pillBg = isApproved
+        ? const Color(0xFFE4E9EE)
+        : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved
+        ? const Color(0xFF6D7A86)
+        : const Color(0xFFB52125);
+    final Color pillText = isApproved
+        ? const Color(0xFF2D3A43)
+        : const Color(0xFFB52125);
 
     return Container(
       decoration: BoxDecoration(

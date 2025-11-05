@@ -21,7 +21,7 @@ class RequestForm extends StatefulWidget {
 }
 
 class _RequestFormState extends State<RequestForm> {
-  String? selectedSlot;           // เก็บแบบ UI เช่น "8:00-10:00"
+  String? selectedSlot; // เก็บแบบ UI เช่น "8:00-10:00"
   bool _submitting = false;
   late final Set<String> _selectableSlots; // เก็บแบบ UI
 
@@ -31,10 +31,11 @@ class _RequestFormState extends State<RequestForm> {
     String fix(String hhmm) {
       hhmm = hhmm.replaceAll('.', ':');
       if (hhmm.length >= 5 && hhmm.startsWith('0')) {
-        hhmm = '${int.parse(hhmm.substring(0,2))}:${hhmm.substring(3,5)}';
+        hhmm = '${int.parse(hhmm.substring(0, 2))}:${hhmm.substring(3, 5)}';
       }
       return hhmm;
     }
+
     return '${fix(parts[0])}-${fix(parts[1])}';
   }
 
@@ -47,6 +48,7 @@ class _RequestFormState extends State<RequestForm> {
       final mm = p[1];
       return '$hh.$mm';
     }
+
     return '${fix(parts[0])}-${fix(parts[1])}';
   }
 
@@ -59,6 +61,18 @@ class _RequestFormState extends State<RequestForm> {
   }
 
   bool get _canSubmit => selectedSlot != null;
+
+  // 🖼️ Choose image based on room type
+  String _getRoomImage(String roomName) {
+    if (roomName.startsWith('SR')) {
+      return 'assets/images/four_people.jpg';
+    } else if (roomName.startsWith('MR')) {
+      return 'assets/images/eight_people.jpg';
+    } else if (roomName.startsWith('LR')) {
+      return 'assets/images/ten_people.jpg';
+    }
+    return 'assets/images/MeetingRoom.jpg'; // default
+  }
 
   Future<void> _submit() async {
     if (!_canSubmit) return;
@@ -81,7 +95,9 @@ class _RequestFormState extends State<RequestForm> {
       widget.onCancel();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -94,26 +110,47 @@ class _RequestFormState extends State<RequestForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('Request form', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+          const Text(
+            'Request form',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
 
-          const Align(alignment: Alignment.centerLeft, child: Text('Room Name', style: TextStyle(fontSize: 24))),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Room Name', style: TextStyle(fontSize: 24)),
+          ),
           const SizedBox(height: 8),
           TextFormField(
             initialValue: widget.roomName,
             readOnly: true,
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 5,
+                horizontal: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               filled: true,
             ),
           ),
 
           const SizedBox(height: 16),
-          Image.asset('assets/images/MeetingRoom.jpg', height: 150, fit: BoxFit.cover),
+
+          // images
+          // 🖼️ dynamic image based on room type
+          Image.asset(
+            _getRoomImage(widget.roomName),
+            // height: 150,
+            fit: BoxFit.cover,
+          ),
 
           const SizedBox(height: 16),
-          const Align(alignment: Alignment.centerLeft, child: Text('Time Slot', style: TextStyle(fontSize: 24))),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Time Slot', style: TextStyle(fontSize: 24)),
+          ),
           const SizedBox(height: 8),
 
           Column(
@@ -144,8 +181,13 @@ class _RequestFormState extends State<RequestForm> {
                   backgroundColor: Colors.white70,
                   foregroundColor: Colors.redAccent,
                   side: const BorderSide(color: Colors.redAccent),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                 ),
                 onPressed: _submitting ? null : widget.onCancel,
                 child: const Text('Cancel'),
@@ -153,8 +195,12 @@ class _RequestFormState extends State<RequestForm> {
               const SizedBox(width: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _canSubmit ? const Color(0xFF4E5B4C) : Colors.grey,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: _canSubmit
+                      ? const Color(0xFF4E5B4C)
+                      : Colors.grey,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: _submitting || !_canSubmit
                     ? null
@@ -163,21 +209,44 @@ class _RequestFormState extends State<RequestForm> {
                           context: context,
                           builder: (_) => AlertDialog(
                             title: const Text('Confirm Request'),
-                            content: Text('Do you want to reserve ${widget.roomName} at $selectedSlot ?'),
+                            content: Text(
+                              'Do you want to reserve ${widget.roomName} at $selectedSlot ?',
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
                               ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4E5B4C)),
-                                onPressed: () { Navigator.pop(context); _submit(); },
-                                child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4E5B4C),
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _submit();
+                                },
+                                child: const Text(
+                                  'Confirm',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ],
                           ),
                         );
                       },
                 child: _submitting
-                    ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Submit', style: TextStyle(color: Colors.white, fontSize: 22)),
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Submit',
+                        style: TextStyle(color: Colors.white, fontSize: 22),
+                      ),
               ),
             ],
           ),
@@ -200,12 +269,22 @@ class _RequestFormState extends State<RequestForm> {
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected && isEnabled ? const Color(0xFFAFBEA2) : Colors.transparent,
+            color: isSelected && isEnabled
+                ? const Color(0xFFAFBEA2)
+                : Colors.transparent,
             borderRadius: isLeft
-                ? const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8))
-                : const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
+                ? const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                  )
+                : const BorderRadius.only(
+                    topRight: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
             border: Border.all(
-              color: isSelected && isEnabled ? const Color(0xFFAFBEA2) : (isEnabled ? Colors.blueAccent : Colors.grey),
+              color: isSelected && isEnabled
+                  ? const Color(0xFFAFBEA2)
+                  : (isEnabled ? Colors.blueAccent : Colors.grey),
               width: 1,
             ),
           ),

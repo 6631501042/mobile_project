@@ -38,25 +38,42 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   }
 
   Future<void> _fetchRooms() async {
-    setState(() { _loading = true; _error = ''; });
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
     try {
       final list = await ApiService.getRooms();
       _all = list.map((e) => RoomSlot.fromJson(e)).toList();
     } catch (e) {
       _error = e.toString();
     } finally {
-      if (mounted) setState(() { _loading = false; });
+      if (mounted)
+        setState(() {
+          _loading = false;
+        });
     }
   }
 
   List<RoomSlot> get _filterRoomSlots {
-    if (_searchQuery.isEmpty) return _all;
-    final q = _searchQuery.toLowerCase();
-    return _all.where((s) =>
-      s.room.toLowerCase().contains(q) ||
-      s.status.toLowerCase().contains(q) ||
-      s.timeSlots.toLowerCase().contains(q),
-    ).toList();
+    final List<RoomSlot> filtered;
+    if (_searchQuery.isEmpty) {
+      filtered = List.from(_all);
+    } else {
+      final q = _searchQuery.toLowerCase();
+      filtered = _all
+          .where(
+            (s) =>
+                s.room.toLowerCase().contains(q) ||
+                s.status.toLowerCase().contains(q) ||
+                s.timeSlots.toLowerCase().contains(q),
+          )
+          .toList();
+    }
+
+    // 🧮 Sort by "no" (least → greatest)
+    filtered.sort((a, b) => a.no.compareTo(b.no));
+    return filtered;
   }
 
   @override
@@ -65,8 +82,13 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(top: 8, bottom: 8, left: 16),
-          child: Text('Browse room list', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Center(
+            child: Text(
+              'Browse room list',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
         _buildSearchBar(),
         _buildRoomTypeCards(),
@@ -74,8 +96,8 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _error.isNotEmpty
-                ? Center(child: Text('Error: $_error'))
-                : _buildRoomListTable(),
+              ? Center(child: Text('Error: $_error'))
+              : _buildRoomListTable(),
         ),
         if (widget.actionButtons != null) widget.actionButtons!,
       ],
@@ -92,52 +114,123 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
           prefixIcon: const Icon(Icons.search, color: Colors.black54),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 10,
+            horizontal: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
           focusedBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(8)),
             borderSide: BorderSide(color: Color(0xFF6A994E), width: 2),
           ),
         ),
-        onChanged: (v) => setState(() { _searchQuery = v; _selectedSlot = null; }),
+        onChanged: (v) => setState(() {
+          _searchQuery = v;
+          _selectedSlot = null;
+        }),
       ),
     );
   }
 
+  // images
   Widget _buildRoomTypeCards() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildRoomCard('Small Room\n(SR)', 'Room capacity:\n4 people'),
+          _buildRoomCard(
+            'Small Room\n(SR)',
+            'Room capacity:\n4 people',
+            'assets/images/four_people.jpg',
+          ),
           const SizedBox(width: 8),
-          _buildRoomCard('Medium Room\n(MR)', 'Room capacity:\n8 people'),
+          _buildRoomCard(
+            'Medium Room\n(MR)',
+            'Room capacity:\n8 people',
+            'assets/images/eight_people.jpg',
+          ),
           const SizedBox(width: 8),
-          _buildRoomCard('Large Room\n(LR)', 'Room capacity:\n10 people'),
+          _buildRoomCard(
+            'Large Room\n(LR)',
+            'Room capacity:\n10 people',
+            'assets/images/ten_people.jpg',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRoomCard(String title, String subtitle) {
+  Widget _buildRoomCard(String title, String subtitle, String imagePath) {
     return Expanded(
-      child: SizedBox(
-        height: 85,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(8)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-              const Spacer(),
-              Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 10)),
-            ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          _showRoomImagePopup(title, imagePath);
+        },
+        child: SizedBox(
+          height: 85,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _cardColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showRoomImagePopup(String title, String imagePath) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(imagePath, fit: BoxFit.cover),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
