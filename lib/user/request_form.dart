@@ -161,15 +161,20 @@ class _RequestFormState extends State<RequestForm> {
                   buildSlot('8:00-10:00', isLeft: true),
                   buildSlot('10:00-12:00', isLeft: false),
                 ],
+          // แสดงช่วงเวลาเฉยๆ
+          TextFormField(
+            initialValue: widget.initialSlot,
+            readOnly: true,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 5,
+                horizontal: 10,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  buildSlot('13:00-15:00', isLeft: true),
-                  buildSlot('15:00-17:00', isLeft: false),
-                ],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-            ],
+              filled: true,
+            ),
           ),
 
           const SizedBox(height: 20),

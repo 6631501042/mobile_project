@@ -105,6 +105,7 @@ class _RegisterState extends State<Register> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE6D5A9),
+      backgroundColor: Color(0xFFE6D5A9),
       body: Center(
         child: Container(
           width: 300,

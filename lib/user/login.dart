@@ -7,6 +7,8 @@ import 'package:mobile_project/user/user.dart';
 import 'package:mobile_project/user/register.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_project/staff/staff.dart';
+import 'package:mobile_project/approver/approver.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -83,7 +85,6 @@ class _LoginState extends State<Login> {
         password.clear();
 
         if (!mounted) return;
-
         // ✅ Navigate by role (reads the same keys later in User/History)
         switch (data['role']) {
           case 'student':
@@ -133,6 +134,34 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
+    void handleLogin() {
+      final String user = username.text.trim();
+      final String pass = password.text.trim();
+
+      if (pass == '1234') {
+        if (user == 'staff001') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Staff()),
+          );
+        } else if (user == '6631501xxx') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const User()),
+          );
+        } else if (user == 'approver001') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Approver()),
+          );
+        } else {
+          _showError(context, 'Invalid username.');
+        }
+      } else {
+        _showError(context, 'Incorrect password.');
+      }
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFE6D5A9),
       body: Center(
@@ -144,12 +173,12 @@ class _LoginState extends State<Login> {
             children: [
               Image.asset('assets/images/bird.png', height: 80),
               const SizedBox(height: 20),
-
               const Text(
                 'Room Reservation System',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 5),
+
               const Text('Please login to your account'),
               const SizedBox(height: 20),
 
@@ -158,6 +187,16 @@ class _LoginState extends State<Login> {
                 alignment: Alignment.centerLeft,
                 child: Text('Username'),
               ),
+
+              const Text(
+                'Please login to your account',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+
+              // Username
+              const Align(alignment: Alignment.centerLeft, child: Text('Username')),
+
               TextField(
                 controller: username,
                 decoration: const InputDecoration(
@@ -170,12 +209,16 @@ class _LoginState extends State<Login> {
                 ),
               ),
               const SizedBox(height: 10),
-
+              
               // Password field
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Password'),
               ),
+              
+              // Password
+              const Align(alignment: Alignment.centerLeft, child: Text('Password')),
+
               TextField(
                 controller: password,
                 obscureText: true,
@@ -196,12 +239,17 @@ class _LoginState extends State<Login> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4E5B4C),
+
                     padding: const EdgeInsets.symmetric(vertical: 12),
+
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side: const BorderSide(color: Color(0xFF4E5B4C)),
                     ),
                   ),
+
                   onPressed: isWaiting ? null : login,
                   child: isWaiting
                       ? const SizedBox(
@@ -216,16 +264,33 @@ class _LoginState extends State<Login> {
                           'Login',
                           style: TextStyle(color: Colors.white),
                         ),
+
+                  onPressed: handleLogin,
+                  child: const Text('Login', style: TextStyle(color: Colors.white)),
+
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Create new account
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text("Don't have an account? "),
+
                   TextButton(
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white70,
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(color: Colors.blue),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
@@ -241,12 +306,29 @@ class _LoginState extends State<Login> {
                         // decorationThickness: 2,
                       ),
                     ),
+                    child: const Text('Create new'),
                   ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showError(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
