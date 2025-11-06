@@ -100,6 +100,8 @@ class _UserState extends State<User> {
         backgroundColor: const Color(0xFFE6D5A9),
         // appbar
         appBar: AppBar(
+          // remove back button
+          automaticallyImplyLeading: false,
           backgroundColor: const Color(0xFF476C5E),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
