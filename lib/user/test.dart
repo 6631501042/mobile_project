@@ -39,15 +39,15 @@ class Reservation {
   });
 
   Reservation copyWith({RStatus? status}) => Reservation(
-        id: id,
-        userId: userId,
-        userName: userName,
-        roomCode: roomCode,
-        date: date,
-        start: start,
-        end: end,
-        status: status ?? this.status,
-      );
+    id: id,
+    userId: userId,
+    userName: userName,
+    roomCode: roomCode,
+    date: date,
+    start: start,
+    end: end,
+    status: status ?? this.status,
+  );
 }
 
 class RLog {
@@ -176,8 +176,8 @@ class _ApproverPageState extends State<ApproverPage> {
     return Scaffold(
       backgroundColor: C.hampton,
 
-      // ❌ ไม่มี appBar / TopBar แล้วตามที่ขอ
-      // ✅ คง FAB "+ Add mock request" ไว้
+      // ❌ ไม่มี appBar / TopBar
+      // ✅ คง FAB "+ Add mock request"
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: C.norway,
         icon: const Icon(Icons.add),
@@ -190,9 +190,7 @@ class _ApproverPageState extends State<ApproverPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
             children: [
-              // เติมระยะบน ~ เท่า AppBar เดิม เพื่อไม่ให้ตำแหน่งเลื่อน
               const SizedBox(height: 76),
-
               const Center(
                 child: Text(
                   'Status',
@@ -218,6 +216,9 @@ class _ApproverPageState extends State<ApproverPage> {
                       itemBuilder: (_, i) => _Card(
                         r: items[i],
                         onApprove: () async {
+                          // เปิด dialog ยืนยันก่อน
+                          final ok = await _confirmApprove(context, items[i]);
+                          if (!ok) return;
                           await repo.set(
                             id: items[i].id,
                             status: RStatus.approved,
@@ -277,14 +278,12 @@ class _HeaderRow extends StatelessWidget {
   const _HeaderRow();
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          Text('User/Room',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-          Text('Action',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: const [
+      Text('User/Room', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+      Text('Action',    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+    ],
+  );
 }
 
 class _Card extends StatelessWidget {
@@ -377,57 +376,101 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: bg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: border, width: 1.4),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () async => await onTap(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: text)),
+    color: bg,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+      side: BorderSide(color: border, width: 1.4),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () async => await onTap(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: text,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// ========== UTIL ==========
 String _two(int v) => v.toString().padLeft(2, '0');
-String _mon(int m) =>
-    const ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m];
+String _mon(int m) => const [
+  '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+][m];
 
 Future<String?> _askReason(BuildContext context) => showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        final c = TextEditingController();
-        return AlertDialog(
-          title: const Text('Reason for rejection'),
-          content: TextField(
-            controller: c,
-            autofocus: true,
-            maxLines: 2,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              hintText: 'Type reason…',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Cancel')),
-            ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(c.text.trim()),
-                child: const Text('Reject')),
-          ],
-        );
-      },
+  context: context,
+  barrierDismissible: false,
+  builder: (ctx) {
+    final c = TextEditingController();
+    return AlertDialog(
+      title: const Text('Reason for rejection'),
+      content: TextField(
+        controller: c,
+        autofocus: true,
+        maxLines: 2,
+        textInputAction: TextInputAction.done,
+        decoration: const InputDecoration(
+          hintText: 'Type reason…',
+          border: OutlineInputBorder(),
+        ),
+        onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(null),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(ctx).pop(c.text.trim()),
+          child: const Text('Reject'),
+        ),
+      ],
     );
+  },
+);
+
+Future<bool> _confirmApprove(BuildContext context, Reservation r) {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) {
+      final dateStr = '${_two(r.date.day)} ${_mon(r.date.month)} ${r.date.year}';
+      String t(TimeOfDay x) => '${x.hour}.${_two(x.minute)}';
+
+      return AlertDialog(
+        title: const Text('Confirm approval'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Approve this reservation?'),
+            const SizedBox(height: 8),
+            Text('User : ${r.userId}  ${r.userName}'),
+            Text('Room : ${r.roomCode}'),
+            Text('Date : $dateStr'),
+            Text('Time : ${t(r.start)}-${t(r.end)}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      );
+    },
+  ).then((v) => v ?? false);
+}
