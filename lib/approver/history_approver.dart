@@ -1,138 +1,281 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
-// ================== PAGE: HISTORY APPROVER ==================
-class HistoryApproverPage extends StatelessWidget {
+class HistoryApproverPage extends StatefulWidget {
   const HistoryApproverPage({super.key});
 
-  // mock data list (will be rendered in a loop)
-  List<HistoryItem> _mockData() {
-    return [
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "28 Sep 2025",
-        time: "8.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-104",
-        date: "24 Sep 2025",
-        time: "15.00-17.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Lion Sins",
-        roomCode: "MR-101",
-        date: "20 Sep 2025",
-        time: "10.00-12.00",
-        status: "Approved",
-        approverName: "Ajarn.Tock",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Nick Sakon",
-        roomCode: "SR-110",
-        date: "1 Sep 2025",
-        time: "13.00-15.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tock",
-        rejectReason: "Room already booked by another department.",
-      ),
-    ];
+  @override
+  State<HistoryApproverPage> createState() => _HistoryApproverPageState();
+}
+
+class _HistoryApproverPageState extends State<HistoryApproverPage> {
+  // ✅ Use 10.0.2.2 for Android emulator; use your PC LAN IP for real device
+  static const String baseUrl = 'http://10.0.2.2:3000';
+
+  late Future<_HistoryResponse> _future;
+
+  //--------------------------------------Demo--------------------------------------------
+  // bool _isDemoApprover = false; // 👈 track if approver is logged in (toggle state)
+
+  // // ✅ Toggle ON = login as staff, OFF = logout-----------------------------------------
+  // Future<void> _setDemoRole(bool value) async {
+  //   final prefs = await SharedPreferences.getInstance();
+
+  //   if (value) {
+  //     // ✅ ON → LOGIN as approver
+  //     await prefs.setInt('role_id', 29); // fake approver id
+  //     await prefs.setString('role_name', 'approver'); // must match your DB
+  //     await prefs.setString('username', 'approver001'); // show name
+  //     debugPrint("🟢 Logged in as approver");
+  //   } else {
+  //     // ❌ OFF → LOGOUT (clear prefs)
+  //     await prefs.clear();
+  //     debugPrint("🔴 Logged out (cleared prefs)");
+  //   }
+
+  //   // refresh screen
+  //   setState(() {
+  //     _isDemoApprover = value;
+  //     _future = _fetchHistory(); // reload data
+  //   });
+  // }
+  //----------------------------------------Demo------------------------------------------
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetchHistory();
+  }
+
+  Future<_HistoryResponse> _fetchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final roleId = prefs.getInt('role_id');
+    final username = prefs.getString('username');
+    final roleName =
+        prefs.getString('role_name'); // 👈 make sure you save this at login
+
+    if (roleId == null) {
+      return _HistoryResponse(
+        items: const [],
+        username: username ?? '—',
+        roleIdText: '—',
+      );
+    }
+
+    // 👇 is this account staff?
+    final bool isStaff = roleName != null &&
+        roleName.toLowerCase() == 'approver'; // adjust to your DB
+
+    // 👇 use /api/staff/history for staff, old endpoint for normal users
+    final Uri url = isStaff
+        ? Uri.parse('$baseUrl/api/approver/history') // approver → see ALL history
+        : Uri.parse(
+            '$baseUrl/api/student/history/$roleId'); // USER → see OWN history
+
+    final res = await http.get(url);
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load history: ${res.statusCode} ${res.body}');
+    }
+
+    final List<dynamic> jsonList = json.decode(res.body);
+    final items = jsonList
+        .map((e) => HistoryItem(
+              reqIdAndUser: (e['reqIdAndUser'] ?? '').toString(),
+              roomCode: (e['roomCode'] ?? '').toString(),
+              date: (e['date'] ?? '').toString(),
+              time: (e['time'] ?? '').toString(),
+              status: (e['status'] ?? '').toString(),
+              approverName: (e['approverName'] ?? '—').toString(),
+              rejectReason:
+                  (e['rejectReason'] as String?)?.trim().isEmpty == true
+                      ? null
+                      : e['rejectReason'],
+            ))
+        .toList();
+
+    return _HistoryResponse(
+      items: items,
+      username: username ?? '—',
+      roleIdText: roleId.toString(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final dataList = _mockData();
+    return FutureBuilder<_HistoryResponse>(
+      future: _future, // ✅ use the field, not _fetchHistory()
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: Colors.black, // outer black frame from your mock
-      body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360, // mock mobile width reference
-            color: const Color(0xFFE6D5A9), // beige bg
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TopBar(
-                  titleRightText: "Ajarn.Tick", // right side small text
-                ),
+        String topRight = "—";
+        List<HistoryItem> dataList = const [];
 
-                // Title + header row
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Center(
-                        child: Text(
-                          "History Approver",
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      Row(
+        if (snap.hasError) {
+          topRight = "Error";
+        } else if (snap.hasData) {
+          topRight = snap.data!.username.isNotEmpty
+              ? snap.data!.username
+              : snap.data!.roleIdText;
+          dataList = snap.data!.items;
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(
+            child: Center(
+              child: Container(
+                width: 360,
+                color: const Color(0xFFE6D5A9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TopBar(titleRightText: topRight),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
+                          // Title
+                          const Center(
                             child: Text(
-                              "Room",
+                              "History Approver",
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: 30,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black,
                               ),
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            "Action",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
+                          const SizedBox(height: 12),
+
+// 🟢 TOGGLE LOGIN BOX (NO const HERE)---------------------------------------------------------------
+                          // Container(
+                          //   width: double.infinity,
+                          //   padding: const EdgeInsets.all(10),
+                          //   margin: const EdgeInsets.only(bottom: 12),
+                          //   decoration: BoxDecoration(
+                          //     color: const Color(0xFFF2EDD9),
+                          //     borderRadius: BorderRadius.circular(8),
+                          //     border: Border.all(
+                          //         color: const Color(0xFF8E8A76), width: 1),
+                          //   ),
+                          //   child: Column(
+                          //     crossAxisAlignment: CrossAxisAlignment.start,
+                          //     children: [
+                          //       const Text(
+                          //         "Demo Login Toggle",
+                          //         style: TextStyle(
+                          //           fontSize: 14,
+                          //           fontWeight: FontWeight.w700,
+                          //           color: Colors.black,
+                          //         ),
+                          //       ),
+                          //       const SizedBox(height: 6),
+                          //       Row(
+                          //         mainAxisAlignment:
+                          //             MainAxisAlignment.spaceBetween,
+                          //         children: [
+                          //           Text(
+                          //             _isDemoApprover
+                          //                 ? "🟢 Logged in as approver"
+                          //                 : "🔴 Logged out",
+                          //             style: const TextStyle(
+                          //               fontSize: 12,
+                          //               color: Colors.black,
+                          //             ),
+                          //           ),
+                          //           Switch(
+                          //             value: _isDemoApprover,
+                          //             onChanged: (value) => _setDemoRole(value),
+                          //             activeColor: const Color(0xFF51624F),
+                          //           ),
+                          //         ],
+                          //       ),
+                          //       const Text(
+                          //         "Toggle ON to login as staff, OFF to logout.",
+                          //         style: TextStyle(
+                          //           fontSize: 10,
+                          //           color: Colors.black54,
+                          //         ),
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
+// 🟢 TOGGLE LOGIN BOX (NO const HERE)----------------------------------------------------------
+                          // Table header
+                          Row(
+                            children: const [
+                              Expanded(
+                                child: Text(
+                                  "Room",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Action",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-
-                // scroll list
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 8,
                     ),
-                    itemCount: dataList.length,
-                    itemBuilder: (context, index) {
-                      final item = dataList[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: HistoryCardApprover(item: item),
-                      );
-                    },
-                  ),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 8,
+                        ),
+                        itemCount: dataList.length,
+                        itemBuilder: (context, index) {
+                          final item = dataList[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: HistoryCardUser(
+                              item: item,
+                            ), // your original card
+                          );
+                        },
+                      ),
+                    ),
+                    const BottomNavBar(),
+                  ],
                 ),
-
-                const BottomNavBar(),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
+
+class _HistoryResponse {
+  final List<HistoryItem> items;
+  final String username;
+  final String roleIdText;
+  _HistoryResponse({
+    required this.items,
+    required this.username,
+    required this.roleIdText,
+  });
 }
 
 // ================== DATA MODEL ==================
@@ -167,10 +310,9 @@ class TopBar extends StatelessWidget {
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      color: const Color(0xFF51624F), // dark green bar
+      color: const Color(0xFF51624F),
       child: Row(
         children: [
-          // left: circle icon + "ROOM RESERVATION"
           Row(
             children: [
               Container(
@@ -205,10 +347,7 @@ class TopBar extends StatelessWidget {
               ),
             ],
           ),
-
           const Spacer(),
-
-          // middle text
           Text(
             titleRightText,
             style: const TextStyle(
@@ -217,13 +356,10 @@ class TopBar extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-
           const SizedBox(width: 8),
-
-          // logout button
           GestureDetector(
             onTap: () {
-              // TODO: Navigator.push(context, MaterialPageRoute(builder: (_) => LogoutPage()));
+              // TODO
             },
             child: Container(
               padding: const EdgeInsets.symmetric(
@@ -250,10 +386,10 @@ class TopBar extends StatelessWidget {
   }
 }
 
-// ================== HISTORY CARD (APPROVER STYLE) ==================
-class HistoryCardApprover extends StatelessWidget {
+// ================== HISTORY CARD (USER STYLE) ==================
+class HistoryCardUser extends StatelessWidget {
   final HistoryItem item;
-  const HistoryCardApprover({super.key, required this.item});
+  const HistoryCardUser({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -299,8 +435,10 @@ class HistoryCardApprover extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: pillBg,
                       borderRadius: BorderRadius.circular(4),
@@ -352,10 +490,7 @@ class HistoryCardApprover extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 item.rejectReason ?? "No reason provided",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
                 softWrap: true,
                 overflow: TextOverflow.visible,
               ),
@@ -399,47 +534,36 @@ class BottomNavBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // row of icons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavIconButton(
                 icon: Icons.home_outlined,
                 onTap: () {
-                  // TODO: Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
+                  // TODO
                 },
               ),
               _NavIconButton(
                 icon: Icons.check_box_outlined,
                 onTap: () {
-                  // TODO: Navigator.push(context, MaterialPageRoute(builder: (_) => HistoryApproverPage()));
+                  // TODO
                 },
               ),
               _NavIconButton(
                 icon: Icons.history,
                 onTap: () {
-                  // TODO: Navigator.push(context, MaterialPageRoute(builder: (_) => ApproveStatusPage()));
-                },
-              ),
-              _NavIconButton(
-                icon: Icons.dashboard_outlined,
-                onTap: () {
-                  // TODO: Navigator.push(context, MaterialPageRoute(builder: (_) => DashboardPage()));
+                  // TODO
                 },
               ),
             ],
           ),
           const SizedBox(height: 8),
-
-          // highlight bar under 2nd icon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: const [
-              SizedBox(width: 24),
-              SizedBox(width: 24),
-              // selected
+              SizedBox(width: 45),
+              SizedBox(width: 45),
               _NavHighlightBar(),
-              SizedBox(width: 24),
             ],
           ),
         ],
