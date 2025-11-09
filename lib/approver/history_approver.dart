@@ -65,11 +65,11 @@ class _HistoryApproverPageState extends State<HistoryApproverPage> {
     }
 
     // 👇 is this account staff?
-    final bool isStaff = roleName != null &&
+    final bool isApprover = roleName != null &&
         roleName.toLowerCase() == 'approver'; // adjust to your DB
 
     // 👇 use /api/staff/history for staff, old endpoint for normal users
-    final Uri url = isStaff
+    final Uri url = isApprover
         ? Uri.parse('$baseUrl/api/approver/history') // approver → see ALL history
         : Uri.parse(
             '$baseUrl/api/student/history/$roleId'); // USER → see OWN history
