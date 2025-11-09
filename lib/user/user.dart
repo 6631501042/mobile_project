@@ -376,6 +376,7 @@ class _HistoryTabState extends State<HistoryTab> {
     final prefs = await SharedPreferences.getInstance();
     final roleId = prefs.getInt('role_id');
     final username = prefs.getString('username');
+    // final username = prefs.getString('username');
 
     if (roleId == null) {
       // no login info yet

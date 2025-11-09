@@ -208,7 +208,7 @@ class _HomeTabState extends State<HomeTab>
   bool isAdding = false;
   bool isEditing = false;
   RoomSlot? selectedSlot;
-  
+
   @override
   bool get wantKeepAlive => true;
   Widget _buildActionButtons() {
@@ -336,125 +336,269 @@ class HistoryTab extends StatefulWidget {
 }
 
 class _HistoryTabState extends State<HistoryTab> {
-  List<HistoryItem> _mockData() {
-    return [
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-105",
-        date: "28 Sep 2025",
-        time: "08.00-10.00",
-        status: "Approved",
-        approverName: "Ajarn.Tick",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Leo Jane",
-        roomCode: "LR-104",
-        date: "24 Sep 2025",
-        time: "15.00-17.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tick",
-        rejectReason: "Room already booked by another department.",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Lion Sins",
-        roomCode: "MR-101",
-        date: "20 Sep 2025",
-        time: "10.00-12.00",
-        status: "Approved",
-        approverName: "Ajarn.Tock",
-      ),
-      HistoryItem(
-        reqIdAndUser: "6E3510/xxx Nick Sakon",
-        roomCode: "SR-110",
-        date: "1 Sep 2025",
-        time: "13.00-15.00",
-        status: "Rejected",
-        approverName: "Ajarn.Tock",
-        rejectReason: "Room already booked by another department.",
-      ),
-    ];
+  // ✅ Use 10.0.2.2 for Android emulator; use your PC LAN IP for real device
+  static const String baseUrl = 'http://192.168.50.51:3000';
+
+  late Future<_HistoryResponse> _future;
+
+  //--------------------------------------Demo--------------------------------------------
+  // bool _isDemoStaff = false; // 👈 track if staff is logged in (toggle state)
+
+  // // ✅ Toggle ON = login as staff, OFF = logout-----------------------------------------
+  // Future<void> _setDemoRole(bool value) async {
+  //   final prefs = await SharedPreferences.getInstance();
+
+  //   if (value) {
+  //     // ✅ ON → LOGIN as STAFF
+  //     await prefs.setInt('role_id', 28); // fake staff id
+  //     await prefs.setString('role_name', 'staff'); // must match your DB
+  //     await prefs.setString('username', 'staff001'); // show name
+  //     debugPrint("🟢 Logged in as staff");
+  //   } else {
+  //     // ❌ OFF → LOGOUT (clear prefs)
+  //     await prefs.clear();
+  //     debugPrint("🔴 Logged out (cleared prefs)");
+  //   }
+
+  //   // refresh screen
+  //   setState(() {
+  //     _isDemoStaff = value;
+  //     _future = _fetchHistory(); // reload data
+  //   });
+  // }
+  //----------------------------------------Demo------------------------------------------
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetchHistory();
+  }
+
+  Future<_HistoryResponse> _fetchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final roleId = prefs.getInt('role_id');
+    final username = prefs.getString('username');
+    final roleName = prefs.getString('role'); // 👈 make sure you save this at login
+
+    if (roleId == null) {
+      return _HistoryResponse(
+        items: const [],
+        username: username ?? '—',
+        roleIdText: '—',
+      );
+    }
+
+    // 👇 is this account staff?
+    final bool isStaff =
+        roleName != null &&
+        roleName.toLowerCase() == 'staff'; // adjust to your DB
+
+    // 👇 use /api/staff/history for staff, old endpoint for normal users
+    final Uri url = isStaff
+        ? Uri.parse('$baseUrl/api/staff/history') // STAFF → see ALL history
+        : Uri.parse('$baseUrl/api/student/history/$roleId'); // USER → see OWN history
+
+    final res = await http.get(url);
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load history: ${res.statusCode} ${res.body}');
+    }
+
+    final List<dynamic> jsonList = json.decode(res.body);
+    final items = jsonList
+        .map(
+          (e) => HistoryItem(
+            reqIdAndUser: (e['reqIdAndUser'] ?? '').toString(),
+            roomCode: (e['roomCode'] ?? '').toString(),
+            date: (e['date'] ?? '').toString(),
+            time: (e['time'] ?? '').toString(),
+            status: (e['status'] ?? '').toString(),
+            approverName: (e['approverName'] ?? '—').toString(),
+            rejectReason: (e['rejectReason'] as String?)?.trim().isEmpty == true
+                ? null
+                : e['rejectReason'],
+          ),
+        )
+        .toList();
+
+    return _HistoryResponse(
+      items: items,
+      username: username ?? '—',
+      roleIdText: roleId.toString(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final dataList = _mockData();
+    return FutureBuilder<_HistoryResponse>(
+      future: _future, // ✅ use the field, not _fetchHistory()
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Center(
-          child: Container(
-            width: 360,
-            color: const Color(0xFFE6D5A9),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Center(
-                        child: Text(
-                          "History Staff",
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      Row(
+        String topRight = "—";
+        List<HistoryItem> dataList = const [];
+
+        if (snap.hasError) {
+          topRight = "Error";
+        } else if (snap.hasData) {
+          topRight = snap.data!.username.isNotEmpty
+              ? snap.data!.username
+              : snap.data!.roleIdText;
+          dataList = snap.data!.items;
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(
+            child: Center(
+              child: Container(
+                width: 360,
+                color: const Color(0xFFE6D5A9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
+                          // Title
+                          const Center(
                             child: Text(
-                              "User/Room",
+                              "History Staff",
                               style: TextStyle(
-                                fontSize: 20,
+                                fontSize: 30,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black,
                               ),
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            "Action",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
+                          const SizedBox(height: 12),
+
+                          // 🟢 TOGGLE LOGIN BOX (NO const HERE)---------------------------------------------------------
+                          // Container(
+                          //   width: double.infinity,
+                          //   padding: const EdgeInsets.all(10),
+                          //   margin: const EdgeInsets.only(bottom: 12),
+                          //   decoration: BoxDecoration(
+                          //     color: const Color(0xFFF2EDD9),
+                          //     borderRadius: BorderRadius.circular(8),
+                          //     border: Border.all(
+                          //         color: const Color(0xFF8E8A76), width: 1),
+                          //   ),
+                          //   child: Column(
+                          //     crossAxisAlignment: CrossAxisAlignment.start,
+                          //     children: [
+                          //       const Text(
+                          //         "Demo Login Toggle",
+                          //         style: TextStyle(
+                          //           fontSize: 14,
+                          //           fontWeight: FontWeight.w700,
+                          //           color: Colors.black,
+                          //         ),
+                          //       ),
+                          //       const SizedBox(height: 6),
+                          //       Row(
+                          //         mainAxisAlignment:
+                          //             MainAxisAlignment.spaceBetween,
+                          //         children: [
+                          //           Text(
+                          //             _isDemoStaff
+                          //                 ? "🟢 Logged in as Staff"
+                          //                 : "🔴 Logged out",
+                          //             style: const TextStyle(
+                          //               fontSize: 12,
+                          //               color: Colors.black,
+                          //             ),
+                          //           ),
+                          //           Switch(
+                          //             value: _isDemoStaff,
+                          //             onChanged: (value) => _setDemoRole(value),
+                          //             activeColor: const Color(0xFF51624F),
+                          //           ),
+                          //         ],
+                          //       ),
+                          //       const Text(
+                          //         "Toggle ON to login as staff, OFF to logout.",
+                          //         style: TextStyle(
+                          //           fontSize: 10,
+                          //           color: Colors.black54,
+                          //         ),
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
+                          // 🟢 TOGGLE LOGIN BOX (NO const HERE)--------------------------------------------------
+                          // Table header
+                          Row(
+                            children: const [
+                              Expanded(
+                                child: Text(
+                                  "Room",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Action",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: 8,
                     ),
-                    itemCount: dataList.length,
-                    itemBuilder: (context, index) {
-                      final item = dataList[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: HistoryCardStaff(item: item),
-                      );
-                    },
-                  ),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 8,
+                        ),
+                        itemCount: dataList.length,
+                        itemBuilder: (context, index) {
+                          final item = dataList[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: HistoryCardUser(
+                              item: item,
+                            ), // your original card
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
+
+class _HistoryResponse {
+  final List<HistoryItem> items;
+  final String username;
+  final String roleIdText;
+  _HistoryResponse({
+    required this.items,
+    required this.username,
+    required this.roleIdText,
+  });
 }
 
 // ================== DATA MODEL ==================
@@ -478,10 +622,10 @@ class HistoryItem {
   });
 }
 
-// ================== HISTORY CARD (STAFF STYLE) ==================
-class HistoryCardStaff extends StatelessWidget {
+// ================== HISTORY CARD (USER STYLE) ==================
+class HistoryCardUser extends StatelessWidget {
   final HistoryItem item;
-  const HistoryCardStaff({super.key, required this.item});
+  const HistoryCardUser({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -511,6 +655,7 @@ class HistoryCardStaff extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // main row (left info + right status)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -568,6 +713,8 @@ class HistoryCardStaff extends StatelessWidget {
               ),
             ],
           ),
+
+          // 👇 move the reason section OUTSIDE the Row
           if (isRejected) ...[
             const SizedBox(height: 8),
             const Text(
