@@ -17,8 +17,8 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
-  // final url = '192.168.50.51:3000';
-  final url = '172.27.7.238:3000';
+  final url = '192.168.50.51:3000';
+  // final url = '172.27.7.238:3000';
   bool isWaiting = false;
   String username = '';
   List? rooms;
@@ -212,7 +212,8 @@ class _HomeTabState extends State<HomeTab> {
       return RequestForm(
         roomId: selectedSlot!.no,
         roomName: selectedSlot!.room,
-        initialSlot: selectedSlot!.timeSlots, // จาก DB เช่น "08.00-10.00"
+        initialSlot: selectedSlot!.timeSlots,// จาก DB เช่น "08.00-10.00"
+        //isInitiallyFree: (selectedSlot!.status == "Free"),
         onCancel: _backToList,
       );
     }
@@ -245,11 +246,8 @@ class _StatusTabState extends State<StatusTab> {
   }
 
   Future<List<RoomSlot>> _load() async {
-    // ดึง role_id จาก SharedPreferences (ถ้ามี login)
-    // ถ้าไม่มี ให้ fallback เป็น 24 เช่นเดิม
     final sp = await SharedPreferences.getInstance();
     final roleId = sp.getInt('role_id') ?? 24;
-
     final list = await ApiService.getMyHistory(roleId);
     return list.map((e) => RoomSlot.fromJson(e)).toList();
   }
@@ -291,16 +289,42 @@ class _StatusTabState extends State<StatusTab> {
               ],
             );
           }
+
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final r = items[i];
+              final status = r.status.toLowerCase();
+
+              // ✅ Define colors for each status
+              final bool isApproved = status == "approved";
+              final bool isRejected = status == "rejected";
+              final bool isPending = status == "pending";
+
+              final Color pillBg = isApproved
+                  ? const Color(0xFFE4E9EE) // Light gray-blue
+                  : isRejected
+                      ? const Color(0xFFF4D6D5) // Soft red
+                      : const Color(0xFFFFF4C4); // 🟡 Yellow for pending
+
+              final Color pillBorder = isApproved
+                  ? const Color(0xFF6D7A86)
+                  : isRejected
+                      ? const Color(0xFFB52125)
+                      : const Color(0xFFF6C12A);
+
+              final Color pillText = isApproved
+                  ? const Color(0xFF2D3A43)
+                  : isRejected
+                      ? const Color(0xFFB52125)
+                      : const Color(0xFF8A6D00);
+
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF2EDD9),
+                  color: const Color(0xFFF2EDD9),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFF8E8A76), width: 1),
                   boxShadow: const [
@@ -331,16 +355,20 @@ class _StatusTabState extends State<StatusTab> {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: r.statusColor,
+                        color: pillBg,
                         borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: pillBorder, width: 1.5),
                       ),
                       child: Text(
                         r.status,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: pillText,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -365,8 +393,8 @@ class HistoryTab extends StatefulWidget {
 }
 
 class _HistoryTabState extends State<HistoryTab> {
-  // static const String baseUrl = 'http://192.168.50.51:3000';
-  static const String baseUrl = 'http://172.27.7.238:3000';
+  static const String baseUrl = 'http://192.168.50.51:3000';
+  // static const String baseUrl = 'http://172.27.7.238:3000';
 
   late Future<_HistoryResponse> _future;
 
@@ -380,6 +408,7 @@ class _HistoryTabState extends State<HistoryTab> {
     final prefs = await SharedPreferences.getInstance();
     final roleId = prefs.getInt('role_id');
     final username = prefs.getString('username');
+    final roleName = prefs.getString('roleName');
 
     if (roleId == null) {
       // no login info yet
@@ -598,7 +627,7 @@ class HistoryCardUser extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _infoText(item.reqIdAndUser, bold: true),
+                    // _infoText(item.reqIdAndUser, bold: true),
                     _infoText(item.roomCode, bold: true),
                     _infoText(item.date),
                     _infoText(item.time),

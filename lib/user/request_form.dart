@@ -48,9 +48,10 @@ class _RequestFormState extends State<RequestForm> {
       final mm = p[1];
       return '$hh.$mm';
     }
-
     return '${fix(parts[0])}-${fix(parts[1])}';
   }
+
+  //bool get _canSubmit => widget.isInitiallyFree && selectedSlot != null;
 
   @override
   void initState() {
