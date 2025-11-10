@@ -16,7 +16,9 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-
+  // Change to your backend IP
+  // final url = '192.168.50.51:3000';
+  final url = '192.168.1.106:3000';
   bool isWaiting = false;
   final TextEditingController username = TextEditingController();
   final TextEditingController password = TextEditingController();
@@ -53,7 +55,8 @@ class _LoginState extends State<Login> {
 
     try {
       // ✅ Use a full base URL with scheme
-      const String baseUrl = 'http://192.168.1.149:3000';
+      // const String baseUrl = 'http://192.168.50.51:3000';
+      const String baseUrl = 'http://192.168.1.106:3000';
       final uri = Uri.parse('$baseUrl/api/login');
 
       final account = {'username': username.text, 'password': password.text};
@@ -133,7 +136,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD8C38A),
+      backgroundColor: const Color(0xFFE6D5A9),
       body: Center(
         child: Container(
           width: 300,
@@ -235,9 +238,9 @@ class _LoginState extends State<Login> {
                       'Create new',
                       style: TextStyle(
                         color: Colors.blue,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.teal,
-                        decorationThickness: 2,
+                        // decoration: TextDecoration.underline,
+                        // decorationColor: Colors.teal,
+                        // decorationThickness: 2,
                       ),
                     ),
                   ),

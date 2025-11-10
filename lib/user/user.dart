@@ -1,24 +1,28 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:mobile_project/user/login.dart';
 import '../modelsData/room_data.dart';
 import '../screensOfBrowseRoomList/base_browse_screen.dart';
 import '../services/api_service.dart';
 import 'package:mobile_project/user/request_form.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mobile_project/user/login.dart';
 
 class User extends StatefulWidget {
   const User({super.key});
+
   @override
   State<User> createState() => _UserState();
 }
 
 class _UserState extends State<User> {
+  // final url = '192.168.50.51:3000';
+  final url = '192.168.1.106:3000';
   bool isWaiting = false;
   String username = '';
   List? rooms;
+
   void popDialog(String message) {
     showDialog(
       context: context,
@@ -42,10 +46,12 @@ class _UserState extends State<User> {
       return;
     }
     // decode token to get user info
+    // final user = jsonDecode(token);
 
     setState(() {
       isWaiting = true;
       username = storage.getString('username') ?? '';
+      // username = user['username'];
     });
 
     await Future.delayed(const Duration(milliseconds: 300)); // เผื่อเวลาสั้นๆ
@@ -91,18 +97,20 @@ class _UserState extends State<User> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: const Color(0xFFD8C38A),
+        backgroundColor: const Color(0xFFE6D5A9),
+        // appbar
         appBar: AppBar(
           backgroundColor: const Color(0xFF476C5E),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // image bird
               Row(
                 children: [
                   Image.asset('assets/images/bird.png', height: 50),
                   const SizedBox(width: 8),
                   const Text(
-                    'ROOM RESERVATION',
+                    'ROOM \nRESERVATION',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -111,15 +119,22 @@ class _UserState extends State<User> {
                   ),
                 ],
               ),
+              // user name
               Row(
                 children: [
                   Text(
                     username,
-                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                    style: TextStyle(fontSize: 12, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
+                  // logout button
                   TextButton(
-                    onPressed: logout,
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Login()),
+                      );
+                    },
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.redAccent,
                       side: const BorderSide(color: Colors.white),
@@ -127,6 +142,7 @@ class _UserState extends State<User> {
                         horizontal: 5,
                         vertical: 5,
                       ),
+                      minimumSize: Size(40, 25),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -141,10 +157,15 @@ class _UserState extends State<User> {
             ],
           ),
         ),
+
+        // tab bar
         body: TabBarView(
           children: [
+            // home
             HomeTab(userName: username),
+            // status
             StatusTab(),
+            // history
             HistoryTab(),
           ],
         ),
@@ -156,7 +177,7 @@ class _UserState extends State<User> {
             unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(icon: Icon(Icons.home), text: 'Home'),
-              Tab(icon: Icon(Icons.check_box_outlined), text: 'Check Status'),
+              Tab(icon: Icon(Icons.star), text: 'Status'),
               Tab(icon: Icon(Icons.schedule), text: 'History'),
             ],
           ),
@@ -166,7 +187,9 @@ class _UserState extends State<User> {
   }
 }
 
-// ========== Home ==========
+// ==========================
+// home
+// ==========================
 class HomeTab extends StatefulWidget {
   final String userName;
   const HomeTab({super.key, required this.userName});
@@ -188,6 +211,7 @@ class _HomeTabState extends State<HomeTab> {
         roomId: selectedSlot!.no,
         roomName: selectedSlot!.room,
         initialSlot: selectedSlot!.timeSlots, // จาก DB เช่น "08.00-10.00"
+         imageUrl: selectedSlot!.imageUrl,
         onCancel: _backToList,
       );
     }
@@ -200,6 +224,9 @@ class _HomeTabState extends State<HomeTab> {
   }
 }
 
+// ==========================
+// status
+// ==========================
 // ========== Status (โหลดรายการจองของฉัน) ==========
 class StatusTab extends StatefulWidget {
   const StatusTab({super.key});
@@ -254,7 +281,12 @@ class _StatusTabState extends State<StatusTab> {
             return ListView(
               children: const [
                 SizedBox(height: 80),
-                Center(child: Text('No reservations yet')),
+                Center(
+                  child: Text(
+                    'No reservations yet',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             );
           }
@@ -267,9 +299,16 @@ class _StatusTabState extends State<StatusTab> {
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Color(0xFFF2EDD9),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black12),
+                  border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      offset: Offset(0, 2),
+                      blurRadius: 3,
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -314,15 +353,340 @@ class _StatusTabState extends State<StatusTab> {
   }
 }
 
-// ========== History ==========
-class HistoryTab extends StatelessWidget {
+// ==========================
+// history
+// ==========================
+class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
+
+  @override
+  State<HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<HistoryTab> {
+  // static const String baseUrl = 'http://192.168.50.51:3000';
+  static const String baseUrl = 'http://172.27.7.238:3000';
+
+  late Future<_HistoryResponse> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetchHistory();
+  }
+
+  Future<_HistoryResponse> _fetchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final roleId = prefs.getInt('role_id');
+    final username = prefs.getString('username');
+
+    if (roleId == null) {
+      // no login info yet
+      return _HistoryResponse(
+        items: const [],
+        username: username ?? '—',
+        roleIdText: '—',
+      );
+    }
+
+    final url = Uri.parse('$baseUrl/api/student/history/$roleId');
+    final res = await http.get(url);
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load history: ${res.statusCode} ${res.body}');
+    }
+
+    final List<dynamic> jsonList = json.decode(res.body);
+    final items = jsonList
+        .map(
+          (e) => HistoryItem(
+            reqIdAndUser: (e['reqIdAndUser'] ?? '').toString(),
+            roomCode: (e['roomCode'] ?? '').toString(),
+            date: (e['date'] ?? '').toString(),
+            time: (e['time'] ?? '').toString(),
+            status: (e['status'] ?? '').toString(),
+            approverName: (e['approverName'] ?? '').toString(),
+            rejectReason: ((e['rejectReason'] ?? '') as String).trim().isEmpty
+                ? null
+                : e['rejectReason'],
+          ),
+        )
+        .toList();
+
+    return _HistoryResponse(
+      items: items,
+      username: username ?? '—',
+      roleIdText: roleId.toString(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return FutureBuilder<_HistoryResponse>(
+      future: _future, // ✅ use the field, not _fetchHistory()
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
+          );
+        }
+
+        // String topRight = "—";
+        List<HistoryItem> dataList = const [];
+
+        if (snap.hasData) {
+          // topRight = snap.data!.username.isNotEmpty
+          // ? snap.data!.username
+          // : snap.data!.roleIdText;
+          dataList = snap.data!.items;
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(
+            child: Center(
+              child: Container(
+                width: 360,
+                color: const Color(0xFFE6D5A9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Text(
+                              "History User",
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Room",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Action",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 8,
+                        ),
+                        itemCount: dataList.length,
+                        itemBuilder: (context, index) {
+                          final item = dataList[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: HistoryCardUser(
+                              item: item,
+                            ), // your original card
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HistoryResponse {
+  final List<HistoryItem> items;
+  final String username;
+  final String roleIdText;
+  _HistoryResponse({
+    required this.items,
+    required this.username,
+    required this.roleIdText,
+  });
+}
+
+// ================== DATA MODEL ==================
+class HistoryItem {
+  final String reqIdAndUser;
+  final String roomCode;
+  final String date;
+  final String time;
+  final String status;
+  final String approverName;
+  final String? rejectReason;
+
+  HistoryItem({
+    required this.reqIdAndUser,
+    required this.roomCode,
+    required this.date,
+    required this.time,
+    required this.status,
+    required this.approverName,
+    this.rejectReason,
+  });
+}
+
+// ================== HISTORY CARD (USER STYLE) ==================
+class HistoryCardUser extends StatelessWidget {
+  final HistoryItem item;
+  const HistoryCardUser({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isApproved = item.status.toLowerCase() == "approved";
+    final bool isRejected = item.status.toLowerCase() == "rejected";
+
+    final Color pillBg = isApproved
+        ? const Color(0xFFE4E9EE)
+        : const Color(0xFFF4D6D5);
+    final Color pillBorder = isApproved
+        ? const Color(0xFF6D7A86)
+        : const Color(0xFFB52125);
+    final Color pillText = isApproved
+        ? const Color(0xFF2D3A43)
+        : const Color(0xFFB52125);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2EDD9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 3),
+        ],
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // main row (left info + right status)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _infoText(item.reqIdAndUser, bold: true),
+                    _infoText(item.roomCode, bold: true),
+                    _infoText(item.date),
+                    _infoText(item.time),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: pillBg,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: pillBorder, width: 1),
+                    ),
+                    child: Text(
+                      item.status,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: pillText,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "By",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    item.approverName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // 👇 move the reason section OUTSIDE the Row
+          if (isRejected) ...[
+            const SizedBox(height: 8),
+            const Text(
+              "Reason for Rejection:",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFB52125),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                item.rejectReason ?? "No reason provided",
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                softWrap: true,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _infoText(String text, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
       child: Text(
-        'My Reservation History',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        text,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+          color: Colors.black,
+        ),
       ),
     );
   }

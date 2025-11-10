@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_project/user/login.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -13,7 +13,8 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  final url = '192.168.1.149:3000';
+  // final url = '192.168.50.51:3000';
+  final url = '192.168.1.106:3000';
   bool isWaiting = false;
 
   final TextEditingController username = TextEditingController();
@@ -104,7 +105,7 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD8C38A),
+      backgroundColor: const Color(0xFFE6D5A9),
       body: Center(
         child: Container(
           width: 300,
