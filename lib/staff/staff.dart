@@ -217,7 +217,8 @@ class _HomeTabState extends State<HomeTab>
 
     return Container(
       // color: const Color(0xFFE6D5A9),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      // padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -232,7 +233,7 @@ class _HomeTabState extends State<HomeTab>
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: addColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -260,7 +261,7 @@ class _HomeTabState extends State<HomeTab>
                   backgroundColor: selectedSlot == null
                       ? Colors.grey
                       : editColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

@@ -56,6 +56,8 @@ class _LoginState extends State<Login> {
       // ✅ Use a full base URL with scheme
       const String baseUrl = 'http://192.168.50.51:3000';
       final uri = Uri.parse('$baseUrl/api/login');
+      // const String baseUrl = '192.168.50.51:3000';
+      // final uri = Uri.http(baseUrl, 'api/login');
 
       final account = {'username': username.text, 'password': password.text};
 

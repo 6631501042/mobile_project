@@ -239,7 +239,7 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   // ✅ Use 10.0.2.2 for Android emulator; use your PC LAN IP for real device
-  static const String baseUrl = '192.168.50.51:3000';
+  static const String baseUrl = 'http://192.168.50.51:3000';
 
   late Future<_HistoryResponse> _future;
 
