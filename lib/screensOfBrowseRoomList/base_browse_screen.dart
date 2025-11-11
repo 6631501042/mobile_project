@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../modelsData/room_data.dart';
 import '../services/api_service.dart';
 
@@ -31,6 +32,12 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
 
+  // 🕒 Date format getter
+  String get _formattedDate {
+    final now = DateTime.now();
+    return DateFormat('d MMMM yyyy').format(now); // day now
+  }
+
   @override
   void initState() {
     super.initState();
@@ -48,10 +55,11 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
     } catch (e) {
       _error = e.toString();
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
         });
+      }
     }
   }
 
@@ -71,7 +79,6 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
           .toList();
     }
 
-    // 🧮 Sort by "no" (least → greatest)
     filtered.sort((a, b) => a.no.compareTo(b.no));
     return filtered;
   }
@@ -96,8 +103,8 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _error.isNotEmpty
-              ? Center(child: Text('Error: $_error'))
-              : _buildRoomListTable(),
+                  ? Center(child: Text('Error: $_error'))
+                  : _buildRoomListTable(),
         ),
         if (widget.actionButtons != null) widget.actionButtons!,
       ],
@@ -114,10 +121,8 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
           prefixIcon: const Icon(Icons.search, color: Colors.black54),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 10,
-            horizontal: 16,
-          ),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide.none,
@@ -139,7 +144,6 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
     );
   }
 
-  // images
   Widget _buildRoomTypeCards() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
@@ -212,13 +216,9 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           content: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset(imagePath, fit: BoxFit.cover),
@@ -236,7 +236,6 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
 
   Widget _buildRoomListTable() {
     return Container(
-      // 🛑 ปรับ Margin ด้านบนจาก all(16.0) เป็น fromLTRB(16.0, 8.0, 16.0, 16.0) เพื่อให้ List Table เลื่อนขึ้น
       margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -244,6 +243,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
       ),
       child: Column(
         children: [
+          // 🗓 Header with today's date
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             alignment: Alignment.center,
@@ -254,11 +254,13 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                 topRight: Radius.circular(8),
               ),
             ),
-            child: const Text(
-              '6 November 2025',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            child: Text(
+              _formattedDate,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
+
+          // Table header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
             decoration: const BoxDecoration(color: _tableHeaderColor),
@@ -269,9 +271,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                   child: Text(
                     'No.',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -279,9 +279,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                   child: Text(
                     'Room',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
@@ -289,24 +287,22 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                   child: Text(
                     'Time slots',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                ), // Flex 2 เพื่อแก้ปัญหาล้นจอ
+                ),
                 Expanded(
                   flex: 2,
                   child: Text(
                     'Status',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
           ),
+
+          // Room list
           Expanded(
             child: ListView.builder(
               itemCount: _filterRoomSlots.length,
@@ -323,11 +319,9 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   Widget _buildTableRow(RoomSlot slot, int index) {
     bool isSelected = _selectedSlot == slot;
 
-    // 🚫 ปิดการคลิกถ้าห้องอยู่ในสถานะที่ไม่อนุญาต
-    bool isClickable =
-        !(slot.status == 'Pending' ||
-            slot.status == 'Reserved' ||
-            slot.status == 'Disabled');
+    bool isClickable = !(slot.status == 'Pending' ||
+        slot.status == 'Reserved' ||
+        slot.status == 'Disabled');
 
     return GestureDetector(
       onTap: isClickable
@@ -339,11 +333,12 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                 widget.onSlotSelected!(slot);
               }
             }
-          : null, // ❌ ถ้าไม่อนุญาตให้คลิก, onTap จะเป็น null
+          : null,
       child: Opacity(
-        opacity: isClickable ? 1.0 : 0.6, // ทำให้แถวที่คลิกไม่ได้ดูจางลง
+        opacity: isClickable ? 1.0 : 0.6,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
           decoration: BoxDecoration(
             color: isSelected
                 ? Colors.amber.withOpacity(0.3)
@@ -360,10 +355,8 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
               Expanded(
                 flex: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: slot.statusColor,
                     borderRadius: BorderRadius.circular(4),
