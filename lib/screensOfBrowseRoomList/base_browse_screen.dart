@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../modelsData/room_data.dart';
 import '../services/api_service.dart';
 import 'room_detail_page.dart';
@@ -10,6 +11,7 @@ class BaseBrowseScreen extends StatefulWidget {
   final Widget? actionButtons;
   final void Function(RoomSlot)? onSlotSelected;
   final void Function(RoomSlot)? onSlotSelectedForDetail;
+
   const BaseBrowseScreen({
     super.key,
     required this.userRole,
@@ -32,6 +34,12 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
 
   static const Color _cardColor = Color(0xFF6A994E);
   static const Color _tableHeaderColor = Color(0xFF90A959);
+
+  // 🕒 Date format getter
+  String get _formattedDate {
+    final now = DateTime.now();
+    return DateFormat('d MMMM yyyy').format(now); // day now
+  }
 
   @override
   void initState() {
@@ -77,7 +85,7 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
       }
 
       //  staff จะเห็นทุก slot รวมทั้งที่หมดเวลาแล้ว(ุถ้าทำเป็น comment ทุก role ก็จะเห็นปกติ)
-      if (widget.userRole != UserRole.staff ) {
+      if (widget.userRole != UserRole.staff) {
         _all = _all.where((room) => isFutureSlot(room.timeSlots)).toList();
       }
     } catch (e) {
@@ -204,47 +212,53 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
   }
 
   Widget _buildRoomCard(String title, String subtitle, String roomType) {
-  return Expanded(
-    child: InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: () async {
-        // --- เริ่มส่วนเตรียมข้อมูล ---
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () async {
+          // --- เริ่มส่วนเตรียมข้อมูล ---
 
-        // 1. กรองห้องทั้งหมดให้เหลือเฉพาะ roomType ที่ต้องการและมีรูป
-        final roomsForThisType = _all
-            .where((r) => r.roomType == roomType && r.imageUrl != null)
-            .toList();
+          // 1. กรองห้องทั้งหมดให้เหลือเฉพาะ roomType ที่ต้องการและมีรูป
+          final roomsForThisType = _all
+              .where((r) => r.roomType == roomType && r.imageUrl != null)
+              .toList();
 
-        // 2. ดึงชื่อห้องที่ไม่ซ้ำ
-        final uniqueRoomNames = roomsForThisType.map((r) => r.room).toSet().toList();
+          // 2. ดึงชื่อห้องที่ไม่ซ้ำ
+          final uniqueRoomNames = roomsForThisType
+              .map((r) => r.room)
+              .toSet()
+              .toList();
 
-        // 3. สร้าง List ของข้อมูลห้องที่ไม่ซ้ำเพื่อส่งไปแสดงผล
-        final List<RoomSlot> uniqueRooms = uniqueRoomNames.map((name) {
-          return roomsForThisType.firstWhere((r) => r.room == name);
-        }).toList();
-        
-        // 4. สร้าง Map ที่เก็บ slot ทั้งหมดของแต่ละห้อง
-        final Map<String, List<RoomSlot>> allSlotsByRoom = {};
-        for (var roomName in uniqueRoomNames) {
-          allSlotsByRoom[roomName] = _all.where((slot) => slot.room == roomName).toList();
-        }
+          // 3. สร้าง List ของข้อมูลห้องที่ไม่ซ้ำเพื่อส่งไปแสดงผล
+          final List<RoomSlot> uniqueRooms = uniqueRoomNames.map((name) {
+            return roomsForThisType.firstWhere((r) => r.room == name);
+          }).toList();
 
-        // --- จบส่วนเตรียมข้อมูล ---
+          // 4. สร้าง Map ที่เก็บ slot ทั้งหมดของแต่ละห้อง
+          final Map<String, List<RoomSlot>> allSlotsByRoom = {};
+          for (var roomName in uniqueRoomNames) {
+            allSlotsByRoom[roomName] = _all
+                .where((slot) => slot.room == roomName)
+                .toList();
+          }
 
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RoomDetailPage(
-              title: title.split('\n').first,
-              userRole: widget.userRole,
-              // 👈 ส่งข้อมูลที่เตรียมไว้ไปให้
-              uniqueRooms: uniqueRooms,
-              allSlotsByRoom: allSlotsByRoom,
-              onSlotSelected: widget.onSlotSelectedForDetail ?? widget.onSlotSelected,
+          // --- จบส่วนเตรียมข้อมูล ---
+
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RoomDetailPage(
+                title: title.split('\n').first,
+                userRole: widget.userRole,
+                // 👈 ส่งข้อมูลที่เตรียมไว้ไปให้
+                uniqueRooms: uniqueRooms,
+                allSlotsByRoom: allSlotsByRoom,
+                onSlotSelected:
+                    widget.onSlotSelectedForDetail ?? widget.onSlotSelected,
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
         child: SizedBox(
           // ... โค้ด Container เดิม ...
           height: 85,
@@ -298,8 +312,8 @@ class _BaseBrowseScreenState extends State<BaseBrowseScreen> {
                 topRight: Radius.circular(8),
               ),
             ),
-            child: const Text(
-              '6 November 2025',
+            child: Text(
+              _formattedDate,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
