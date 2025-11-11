@@ -1,6 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:mobile_project/user/test.dart';  // ✅ import หน้าที่เราแก้ไว้
+import 'package:mobile_project/approver/approver_status.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +13,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Status(), // ✅ หน้า Status() มาจากไฟล์ test.dart
+      home: ApproverStatusPage(
+        approverId: '29', // ✅ ใส่เป็น id ของ approver จริง
+      ),
     );
   }
 }
