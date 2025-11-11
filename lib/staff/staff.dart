@@ -208,6 +208,13 @@ class _HomeTabState extends State<HomeTab>
   bool isAdding = false;
   bool isEditing = false;
   RoomSlot? selectedSlot;
+  void _selectAndEditSlot(RoomSlot slot) {
+    setState(() {
+      selectedSlot = slot;
+      isEditing = true; // 🔥 เปิดฟอร์มทันที
+      isAdding = false;
+    });
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -217,8 +224,7 @@ class _HomeTabState extends State<HomeTab>
 
     return Container(
       // color: const Color(0xFFE6D5A9),
-      // padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -233,7 +239,7 @@ class _HomeTabState extends State<HomeTab>
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: addColor,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -261,7 +267,7 @@ class _HomeTabState extends State<HomeTab>
                   backgroundColor: selectedSlot == null
                       ? Colors.grey
                       : editColor,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -306,6 +312,7 @@ class _HomeTabState extends State<HomeTab>
       return AddEditForm(
         isEdit: true,
         roomSlot: selectedSlot,
+        roomId: selectedSlot!.no,
         onCancel: () {
           resetEditState(); // รีเซ็ตเฉพาะ Edit
         },
@@ -313,15 +320,19 @@ class _HomeTabState extends State<HomeTab>
     }
 
     // ✅ แสดง Browse ปกติ
+
     return BaseBrowseScreen(
       userRole: UserRole.staff,
       userName: widget.userName,
       actionButtons: _buildActionButtons(),
+      // Callback สำหรับการแตะที่ตาราง (แค่เลือก)
       onSlotSelected: (slot) {
         setState(() {
-          selectedSlot = slot; // ✅ เก็บห้องที่เลือก
+          selectedSlot = slot;
         });
       },
+      // Callback สำหรับหน้า Detail (เลือกและเปิดฟอร์ม)
+      onSlotSelectedForDetail: _selectAndEditSlot,
     );
   }
 }
