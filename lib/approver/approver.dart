@@ -46,10 +46,12 @@ class _ApproverState extends State<Approver> {
     }
     // decode token to get user info
     final user = jsonDecode(token);
+    print('Decoded user: $user'); // debug print
 
     setState(() {
       isWaiting = true;
       username = user['username'];
+      approverId = user['id'].toString(); // 👈 assign approver ID from token
     });
 
     // get all rooms
@@ -345,17 +347,19 @@ class _StatusTabState extends State<StatusTab> {
                 )
               else
                 ...items.map(
-                  (row) => _ItemCard(
-                    requester: (row['requesterName'] ?? '').toString(),
-                    roomCode: (row['roomCode'] ?? '').toString(),
-                    date: (row['date'] ?? '').toString(), // "YYYY-MM-DD"
-                    timeslot: (row['timeslot'] ?? '')
-                        .toString(), // "10.00-12.00"
-                    onApprove: () => _approve(row),
-                    // ✅ ส่ง reason เข้ามาเลย
-                    onReject: (reason) => _reject(row, reason),
+                  (row) => Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0,), // ⬅️ space between cards
+                    child: _ItemCard(
+                      requester: (row['requesterName'] ?? '').toString(),
+                      roomCode: (row['roomCode'] ?? '').toString(),
+                      date: (row['date'] ?? '').toString(),
+                      timeslot: (row['timeslot'] ?? '').toString(),
+                      onApprove: () => _approve(row),
+                      onReject: (reason) => _reject(row, reason),
+                    ),
                   ),
                 ),
+
               const SizedBox(height: 24),
             ],
           ),
