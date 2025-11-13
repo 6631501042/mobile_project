@@ -13,7 +13,8 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  final url = '192.168.50.51:3000';
+  // final url = '192.168.50.51:3000';
+  final url = '172.27.10.98:3000';
   bool isWaiting = false;
 
   final TextEditingController username = TextEditingController();

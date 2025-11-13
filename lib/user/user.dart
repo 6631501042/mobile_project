@@ -17,7 +17,8 @@ class User extends StatefulWidget {
 }
 
 class _UserState extends State<User> {
-  final url = '192.168.50.51:3000';
+  // final url = '192.168.50.51:3000';
+  final url = '172.27.10.98:3000';
   bool isWaiting = false;
   String username = '';
   List? rooms;
@@ -245,7 +246,7 @@ class _StatusTabState extends State<StatusTab> {
 
   Future<List<RoomSlot>> _load() async {
     final sp = await SharedPreferences.getInstance();
-    final roleId = sp.getInt('role_id') ?? 24;
+    final roleId = sp.getInt('role_id') ?? 24; // default to student
     final list = await ApiService.getMyHistory(roleId);
     return list.map((e) => RoomSlot.fromJson(e)).toList();
   }
@@ -435,7 +436,8 @@ class HistoryTab extends StatefulWidget {
 }
 
 class _HistoryTabState extends State<HistoryTab> {
-  static const String baseUrl = 'http://192.168.50.51:3000';
+  // static const String baseUrl = 'http://192.168.50.51:3000';
+  static const String baseUrl = 'http://172.27.10.98:3000';
 
   late Future<_HistoryResponse> _future;
 

@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 // Emulator Android (AVD): http://10.0.2.2:3000
 // LDPlayer/มือถือจริง:  http://<IP-คอม>:3000  เช่น http://192.168.1.196:3000
 // const String BASE_URL = 'http://192.168.1.196:3000';
-const String BASE_URL = 'http://192.168.50.51:3000';
+// const String BASE_URL = 'http://192.168.50.51:3000';
+const String BASE_URL = 'http://172.27.10.98:3000';
 
 class ApproverService {
   static Future<List<Map<String, dynamic>>> fetchPending() async {
