@@ -50,9 +50,10 @@ class _RequestFormState extends State<RequestForm> {
       final mm = p[1];
       return '$hh.$mm';
     }
-
     return '${fix(parts[0])}-${fix(parts[1])}';
   }
+
+  //bool get _canSubmit => widget.isInitiallyFree && selectedSlot != null;
 
   @override
   void initState() {
@@ -161,12 +162,24 @@ class _RequestFormState extends State<RequestForm> {
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 5,
                 horizontal: 10,
+
+          Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildSlot('8:00-10:00', isLeft: true),
+                  buildSlot('10:00-12:00', isLeft: false),
+                ],
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildSlot('13:00-15:00', isLeft: true),
+                  buildSlot('15:00-17:00', isLeft: false),
+                ],
               ),
-              filled: true,
-            ),
+            ],
           ),
 
           const SizedBox(height: 20),

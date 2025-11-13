@@ -18,6 +18,7 @@ class User extends StatefulWidget {
 
 class _UserState extends State<User> {
   final url = '192.168.50.51:3000';
+  // final url = '172.27.7.238:3000';
   bool isWaiting = false;
   String username = '';
   List? rooms;
@@ -99,6 +100,8 @@ class _UserState extends State<User> {
         backgroundColor: const Color(0xFFE6D5A9),
         // appbar
         appBar: AppBar(
+          // remove back button
+          automaticallyImplyLeading: false,
           backgroundColor: const Color(0xFF476C5E),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -328,6 +331,52 @@ return ListView(
                     Text(
                       'Action',
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ],
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, i) {
+              final r = items[i];
+              final status = r.status.toLowerCase();
+
+              // ✅ Define colors for each status
+              final bool isApproved = status == "approved";
+              final bool isRejected = status == "rejected";
+              final bool isPending = status == "pending";
+
+              final Color pillBg = isApproved
+                  ? const Color(0xFFE4E9EE) // Light gray-blue
+                  : isRejected
+                      ? const Color(0xFFF4D6D5) // Soft red
+                      : const Color(0xFFFFF4C4); // 🟡 Yellow for pending
+
+              final Color pillBorder = isApproved
+                  ? const Color(0xFF6D7A86)
+                  : isRejected
+                      ? const Color(0xFFB52125)
+                      : const Color(0xFFF6C12A);
+
+              final Color pillText = isApproved
+                  ? const Color(0xFF2D3A43)
+                  : isRejected
+                      ? const Color(0xFFB52125)
+                      : const Color(0xFF8A6D00);
+
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2EDD9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      offset: Offset(0, 2),
+                      blurRadius: 3,
                     ),
                   ],
                 ),
@@ -417,6 +466,29 @@ return ListView(
                 const SizedBox(height: 24),
               ],
             );
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: pillBg,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: pillBorder, width: 1.5),
+                      ),
+                      child: Text(
+                        r.status,
+                        style: TextStyle(
+                          color: pillText,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
         },
       ),
     );
@@ -435,6 +507,7 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   static const String baseUrl = 'http://192.168.50.51:3000';
+  // static const String baseUrl = 'http://172.27.7.238:3000';
 
   late Future<_HistoryResponse> _future;
 
@@ -449,6 +522,7 @@ class _HistoryTabState extends State<HistoryTab> {
     final roleId = prefs.getInt('role_id');
     final username = prefs.getString('username');
     // final username = prefs.getString('username');
+    final roleName = prefs.getString('roleName');
 
     if (roleId == null) {
       // no login info yet
@@ -667,7 +741,7 @@ class HistoryCardUser extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _infoText(item.reqIdAndUser, bold: true),
+                    // _infoText(item.reqIdAndUser, bold: true),
                     _infoText(item.roomCode, bold: true),
                     _infoText(item.date),
                     _infoText(item.time),
