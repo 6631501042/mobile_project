@@ -276,16 +276,61 @@ class _StatusTabState extends State<StatusTab> {
             );
           }
           final items = snap.data ?? [];
-          if (items.isEmpty) {
-            return ListView(
-              children: const [
-                SizedBox(height: 80),
-                Center(
+            if (items.isEmpty) {
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                children: const [
+                  Center(
+                    child: Text(
+                      'Status',
+                      style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'User/Room',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        'Action',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 100),
+                  Center(
+                    child: Text(
+                      'No reservations yet',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+return ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              children: [
+                const Center(
                   child: Text(
-                    'No reservations yet',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    'Status',
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
                   ),
                 ),
+                const SizedBox(height: 5),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text(
+                      'User/Room',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      'Action',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ],
             );
           }
@@ -335,24 +380,92 @@ class _StatusTabState extends State<StatusTab> {
                     ),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 10),
+
+                // your room cards
+                ...items.map((r) {
+                  final status = r.status.toLowerCase();
+
+                  final bool isApproved = status == "approved";
+                  final bool isRejected = status == "rejected";
+                  final bool isPending = status == "pending";
+
+                  final Color pillBg = isApproved
+                      ? const Color(0xFFE4E9EE)
+                      : isRejected
+                          ? const Color(0xFFF4D6D5)
+                          : const Color(0xFFFFF4C4);
+
+                  final Color pillBorder = isApproved
+                      ? const Color(0xFF6D7A86)
+                      : isRejected
+                          ? const Color(0xFFB52125)
+                          : const Color(0xFFF6C12A);
+
+                  final Color pillText = isApproved
+                      ? const Color(0xFF2D3A43)
+                      : isRejected
+                          ? const Color(0xFFB52125)
+                          : const Color(0xFF8A6D00);
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2EDD9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF8E8A76), width: 1),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            offset: Offset(0, 2),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: Row(
                         children: [
-                          Text(
-                            r.room,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  r.room,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('Timeslot: ${r.timeSlots}'),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text('Timeslot: ${r.timeSlots}'),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: pillBg,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: pillBorder, width: 1.5),
+                            ),
+                            child: Text(
+                              r.status,
+                              style: TextStyle(
+                                color: pillText,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
+                  );
+                }),
+
+                const SizedBox(height: 24),
+              ],
+            );
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -408,6 +521,7 @@ class _HistoryTabState extends State<HistoryTab> {
     final prefs = await SharedPreferences.getInstance();
     final roleId = prefs.getInt('role_id');
     final username = prefs.getString('username');
+    // final username = prefs.getString('username');
     final roleName = prefs.getString('roleName');
 
     if (roleId == null) {

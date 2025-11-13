@@ -7,6 +7,7 @@ class RequestForm extends StatefulWidget {
   final String roomName;
   final String initialSlot; // จาก DB เช่น "08.00-10.00"
   final int roomId;
+  final String? imageUrl;
 
   const RequestForm({
     super.key,
@@ -14,6 +15,7 @@ class RequestForm extends StatefulWidget {
     required this.roomName,
     required this.initialSlot,
     required this.roomId,
+    this.imageUrl,
   });
 
   @override
@@ -23,7 +25,7 @@ class RequestForm extends StatefulWidget {
 class _RequestFormState extends State<RequestForm> {
   String? selectedSlot; // เก็บแบบ UI เช่น "8:00-10:00"
   bool _submitting = false;
-  late final Set<String> _selectableSlots; // เก็บแบบ UI
+
 
   // "08.00-10.00" (DB) -> "8:00-10:00" (UI)
   String _dbToUiTimeslot(String s) {
@@ -58,22 +60,9 @@ class _RequestFormState extends State<RequestForm> {
     super.initState();
     final uiSlot = _dbToUiTimeslot(widget.initialSlot);
     selectedSlot = uiSlot;
-    _selectableSlots = {uiSlot}; // อนุญาตให้กดเฉพาะ slot ที่เลือกมาจากหน้าลิสต์
   }
 
   bool get _canSubmit => selectedSlot != null;
-
-  // 🖼️ Choose image based on room type
-  String _getRoomImage(String roomName) {
-    if (roomName.startsWith('SR')) {
-      return 'assets/images/four_people.jpg';
-    } else if (roomName.startsWith('MR')) {
-      return 'assets/images/eight_people.jpg';
-    } else if (roomName.startsWith('LR')) {
-      return 'assets/images/ten_people.jpg';
-    }
-    return 'assets/images/MeetingRoom.jpg'; // default
-  }
 
   Future<void> _submit() async {
     if (!_canSubmit) return;
@@ -139,20 +128,40 @@ class _RequestFormState extends State<RequestForm> {
 
           const SizedBox(height: 16),
 
-          // images
-          // 🖼️ dynamic image based on room type
-          Image.asset(
-            _getRoomImage(widget.roomName),
-            // height: 150,
-            fit: BoxFit.cover,
+      // --- 🖼️ เพิ่มส่วนแสดงรูปภาพตรงนี้ ---
+        if (widget.imageUrl != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              '${ApiService.base}${widget.imageUrl}', // ต่อ baseUrl ด้วย
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 200,
+                  color: Colors.grey[300],
+                  child: const Center(child: Icon(Icons.broken_image, size: 48)),
+                );
+              },
+            ),
           ),
-
-          const SizedBox(height: 16),
+        
+        const SizedBox(height: 16),
           const Align(
             alignment: Alignment.centerLeft,
             child: Text('Time Slot', style: TextStyle(fontSize: 24)),
           ),
           const SizedBox(height: 8),
+
+         // แสดงช่วงเวลาเฉยๆ
+          TextFormField(
+            initialValue: widget.initialSlot,
+            readOnly: true,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 5,
+                horizontal: 10,
 
           Column(
             children: [
@@ -252,53 +261,6 @@ class _RequestFormState extends State<RequestForm> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget buildSlot(String time, {required bool isLeft}) {
-    final isEnabled = _selectableSlots.contains(time);
-    final isSelected = selectedSlot == time;
-
-    return GestureDetector(
-      onTap: !isEnabled ? null : () => setState(() => selectedSlot = time),
-      child: Opacity(
-        opacity: isEnabled ? 1.0 : 0.4,
-        child: Container(
-          height: 70,
-          width: 140,
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected && isEnabled
-                ? const Color(0xFFAFBEA2)
-                : Colors.transparent,
-            borderRadius: isLeft
-                ? const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    bottomLeft: Radius.circular(8),
-                  )
-                : const BorderRadius.only(
-                    topRight: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                  ),
-            border: Border.all(
-              color: isSelected && isEnabled
-                  ? const Color(0xFFAFBEA2)
-                  : (isEnabled ? Colors.blueAccent : Colors.grey),
-              width: 1,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              time,
-              style: TextStyle(
-                color: isSelected && isEnabled ? Colors.white : Colors.black87,
-                fontSize: 22,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
