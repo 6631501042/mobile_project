@@ -212,6 +212,7 @@ class _HomeTabState extends State<HomeTab> {
         initialSlot: selectedSlot!.timeSlots,// จาก DB เช่น "08.00-10.00"
         //isInitiallyFree: (selectedSlot!.status == "Free"),
         onCancel: _backToList,
+        imageUrl: selectedSlot!.imageUrl,
       );
     }
     return BaseBrowseScreen(

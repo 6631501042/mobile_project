@@ -44,7 +44,7 @@ class RoomSlot {
       timeSlots: j['timeslot'] as String,
       status: normalized,
       roomType: j['roomtype'] as String?,
-      imageUrl: j['imageUrl'] as String?,
+      imageUrl: j['image'] as String?, // fix from 'imageUrl' to 'image'
     );
   }
 
