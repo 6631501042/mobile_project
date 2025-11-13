@@ -20,7 +20,7 @@ class _ApproverState extends State<Approver> {
   final url = '172.27.10.98:3000';
   bool isWaiting = false;
   String username = '';
-  String approverId = '';
+  String approverIdNAME = '';
   List? rooms;
 
   void popDialog(String message) {
@@ -47,12 +47,13 @@ class _ApproverState extends State<Approver> {
     }
     // decode token to get user info
     final user = jsonDecode(token);
-    print('Decoded user: $user'); // debug print
+    print('Decoded user: $user');
+    print(user["role_id"].toString()); // debug print
 
     setState(() {
       isWaiting = true;
       username = user['username'];
-      approverId = user['id'].toString(); // 👈 assign approver ID from token
+      approverIdNAME = user["role_id"].toString(); // 👈 assign approver ID from token
     });
 
     // get all rooms
@@ -173,7 +174,7 @@ class _ApproverState extends State<Approver> {
             // home
             HomeTab(userName: username),
             // status
-            StatusTab(approverId: approverId),
+            StatusTab(approverId: approverIdNAME),
             // history
             HistoryTab(),
             // dashboard
@@ -277,6 +278,7 @@ class _StatusTabState extends State<StatusTab> {
 
   // ✅ รับ reason มาจากการ์ด (ไม่ถามซ้ำ)
   Future<void> _reject(Map<String, dynamic> row, String reason) async {
+    print(widget.approverId);
     if (reason.isEmpty) return;
 
     final hid = int.tryParse(row['history_id'].toString()) ?? -1;
@@ -349,7 +351,9 @@ class _StatusTabState extends State<StatusTab> {
               else
                 ...items.map(
                   (row) => Padding(
-                    padding: const EdgeInsets.only(bottom: 15.0,), // ⬅️ space between cards
+                    padding: const EdgeInsets.only(
+                      bottom: 15.0,
+                    ), // ⬅️ space between cards
                     child: _ItemCard(
                       requester: (row['requesterName'] ?? '').toString(),
                       roomCode: (row['roomCode'] ?? '').toString(),
