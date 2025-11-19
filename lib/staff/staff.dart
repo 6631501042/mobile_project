@@ -16,8 +16,8 @@ class Staff extends StatefulWidget {
 }
 
 class _StaffState extends State<Staff> {
-  // final url = '192.168.50.51:3000';
-  final url = '172.27.10.98:3000';
+  final url = '192.168.50.51:3000';
+  // final url = '172.27.10.98:3000';
   bool isWaiting = false;
   String username = '';
   List? rooms;
@@ -350,8 +350,8 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   // ✅ Use 10.0.2.2 for Android emulator; use your PC LAN IP for real device
-  // static const String baseUrl = 'http://192.168.50.51:3000';
-  static const String baseUrl = 'http://172.27.10.98:3000';
+  static const String baseUrl = 'http://192.168.50.51:3000';
+  // static const String baseUrl = 'http://172.27.10.98:3000';
 
   late Future<_HistoryResponse> _future;
 
@@ -783,8 +783,8 @@ class DashboardTab extends StatefulWidget {
 }
 
 class _DashboardTabState extends State<DashboardTab> {
-  // final String url = '192.168.50.51:3000';
-  final String url = '172.27.10.98:3000';
+  final String url = '192.168.50.51:3000';
+  // final String url = '172.27.10.98:3000';
   bool isLoading = true;
   int free = 0;
   int pending = 0;
@@ -863,19 +863,19 @@ class _DashboardTabState extends State<DashboardTab> {
                       children: [
                         _card(
                           'assets/images/free.png',
-                          'Free Slots',
+                          'Free Rooms',
                           '$free',
                           const Color(0xFFA8E6CF), // green mint
                         ),
                         _card(
                           'assets/images/pending.png',
-                          'Pending Slots',
+                          'Pending Rooms',
                           '$pending',
                           const Color(0xFFFFF59D), // soft yellow
                         ),
                         _card(
                           'assets/images/reserve.png',
-                          'Reserved Slots',
+                          'Reserved Rooms',
                           '$reserved',
                           const Color(0xFF81D4FA), // light blue
                         ),

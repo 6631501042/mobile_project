@@ -4,10 +4,8 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   /// iOS Simulator ใช้ 127.0.0.1
-  // static const String base = 'http://192.168.50.51:3000';
-  static const String base = 'http://172.27.10.98:3000';
-  // static const String base = 'http://192.168.1.106:3000';
-  // static const String base = 'http://172.27.7.238:3000';
+  static const String base = 'http://192.168.50.51:3000';
+  // static const String base = 'http://172.27.10.98:3000';
 
   static const _json = {'Content-Type': 'application/json'};
   static const _timeout = Duration(seconds: 10);

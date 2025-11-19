@@ -17,8 +17,8 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   // Change to your backend IP
-  // final url = '192.168.50.51:3000';
-  final url = '172.27.10.98:3000';
+  final url = '192.168.50.51:3000';
+  // final url = '172.27.10.98:3000';
   bool isWaiting = false;
   final TextEditingController username = TextEditingController();
   final TextEditingController password = TextEditingController();
@@ -55,8 +55,8 @@ class _LoginState extends State<Login> {
 
     try {
       // ✅ Use a full base URL with scheme
-      // const String baseUrl = 'http://192.168.50.51:3000';
-      const String baseUrl = 'http://172.27.10.98:3000';
+      const String baseUrl = 'http://192.168.50.51:3000';
+      // const String baseUrl = 'http://172.27.10.98:3000';
       final uri = Uri.parse('$baseUrl/api/login');
       // const String baseUrl = '192.168.50.51:3000';
       // final uri = Uri.http(baseUrl, 'api/login');
